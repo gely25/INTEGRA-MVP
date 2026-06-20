@@ -1,0 +1,5 @@
+allowBuilds:
+  '@prisma/engines': set this to true or false
+  msw: true
+  prisma: set this to true or false
+  sharp: true

@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Case {
+  id                 String   @id @default(cuid())
+  caseId             String   @unique
+  organ              String
+  origin             String
+  originCity         String
+  destination        String
+  destinationCity    String
+  currentLocation    String
+  containerId        String
+  deviceId           String
+  status             String   // Preparado, Creado, En traslado, Recibido, Cerrado
+  custodyStatus      String   // Pendiente, Activa, Recepción confirmada
+  tempInternal       Float
+  tempExternal       Float
+  battery            Int
+  gpsActive          Boolean
+  connectivity       String
+  source             String   // SIMULATED_SENSOR, REAL_SENSOR
+  ischemiaWindowMin  Int
+  ischemiaTargetMin  Int
+  eta                String
+  evidenceStatus     String   // VALID, BROKEN, pending
+  deviceAuthorized   Boolean
+  sealStatus         String
+  coldChain          String
+  routeProgress      Int
+
+  events             Event[]
+  telemetry          Telemetry[]
+  alerts             Alert[]
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  eventId   String   @unique // Ej. EVT-01
+  eventName String   // CASE_CREATED, TRANSPORT_STARTED, etc.
+  time      String
+  actor     String
+  org       String
+  txId      String
+  prevHash  String
+  hash      String
+  status    String   // VALID, BROKEN, pending
+
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id])
+}
+
+model Telemetry {
+  id        String   @id @default(cuid())
+  time      String
+  internal  Float
+  external  Float
+
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id])
+}
+
+model Alert {
+  id           String   @id @default(cuid())
+  alertId      String   @unique // Ej. ALR-00
+  code         String   // TEMP_CRITICAL, ANOMALY_WARNING, etc.
+  level        String   // info, warn, danger
+  title        String
+  detail       String
+  time         String
+  acknowledged Boolean  @default(false)
+
+  caseId       String
+  case         Case     @relation(fields: [caseId], references: [id])
+}
