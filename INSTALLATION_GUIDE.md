@@ -20,6 +20,12 @@ cd integra-panel
 pnpm install
 ```
 
+> ⚠️ **Seguridad de pnpm:** Si al instalar o ejecutar el proyecto ves un error que dice `[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: @prisma/engines...`, es una medida de seguridad de pnpm bloqueando la descarga del motor de base de datos de Prisma. Para solucionarlo, ejecuta:
+> ```bash
+> pnpm approve-builds
+> ```
+> *(Presiona la letra `a` para seleccionar todo y luego `Enter` para aprobar los binarios de Prisma).*
+
 ## 2. Configuración de Variables de Entorno
 
 El proyecto no incluye variables sensibles en el repositorio por seguridad. Debes crear tu propio archivo de entorno:
