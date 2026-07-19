@@ -1,22 +1,72 @@
-# INTEGRA — Panel Operativo del Traslado Renal 
+# INTEGRA — Panel Operativo del Traslado Renal
 
-**INTEGRA** es un panel operativo de custodia y trazabilidad diseñado para monitorear el traslado de órganos donantes (en este caso, un riñón) en tiempo real. La plataforma simula un entorno crítico de logística médica, garantizando la cadena de frío, la integridad del contenedor y proporcionando telemetría continua mediante integración con IoT e Inteligencia Artificial.
+INTEGRA es un panel operativo de custodia y trazabilidad diseñado para monitorear el traslado de órganos donantes (en este caso, un riñón) en tiempo real.
+
+La plataforma simula un entorno crítico de logística médica, garantizando la cadena de frío, la integridad del contenedor y proporcionando telemetría continua mediante integración con IoT e Inteligencia Artificial.
 
 ---
 
-## Futuras Características Principales
+# Características Implementadas
 
-*   **Trazabilidad Completa (Simulación Blockchain):** Registro inmutable de eventos de custodia (creación del caso, inicio de traslado, alertas).
-*   **Telemetría IoT en Tiempo Real (Simulado con IA y Backend):** Monitoreo continuo de la temperatura interna y externa, batería del contenedor y posición GPS.
-*   **Gemelo Operativo 3D:** Visualización del estado digital del órgano y las condiciones de su entorno.
-*   **Gestión por Roles (RBAC):** Interfaces personalizadas dependiendo del actor logístico:
-    *    **Coordinador:** Visión global, control de isquemia y mando de alertas.
-    *    **Transportador:** Resumen de ruta, progreso y estado del hardware.
-    *    **Hospital Receptor:** Checklist estricto de recepción validando cadena de frío y firmas criptográficas.
-    *    **Auditor:** Resumen forense para evaluar la integridad del traslado post-mortem.
-*   **Integración Abierta con Inteligencia Artificial:** Arquitectura lista para conectar modelos de predicción de anomalías basados en la telemetría del contenedor.
+- Dashboard operativo del traslado renal.
+- Gestión de casos.
+- Registro de eventos de custodia.
+- Telemetría simulada del contenedor.
+- Alertas en tiempo real.
+- Gestión de usuarios mediante autenticación.
+- Inicio y cierre de sesión.
+- Protección de rutas mediante Middleware.
+- Gestión de roles (RBAC):
+  - Coordinador
+  - Transportador
+  - Hospital Receptor
+  - Auditor
 
-## Stack Tecnológico
+---
+
+# Próximas Funcionalidades
+
+## Trazabilidad Completa (Simulación Blockchain)
+
+Registro inmutable de eventos de custodia:
+
+- Creación del caso
+- Inicio del traslado
+- Alertas
+- Cambios de estado
+
+## Telemetría IoT + Inteligencia Artificial
+
+- Temperatura interna
+- Temperatura externa
+- Nivel de batería
+- Posición GPS
+- Detección automática de anomalías mediante IA
+
+## Gemelo Operativo 3D
+
+Visualización digital del estado del órgano y del contenedor durante el traslado.
+
+---
+
+# Gestión por Roles (RBAC)
+
+Actualmente el sistema cuenta con autenticación mediante correo y contraseña.
+
+Cada usuario posee un rol determinado.
+
+| Rol | Función |
+|------|----------|
+| Coordinador | Administración completa del traslado |
+| Transportador | Seguimiento del traslado |
+| Hospital | Recepción del órgano |
+| Auditor | Consulta del historial y trazabilidad |
+
+Las rutas protegidas utilizan Middleware de Next.js para impedir el acceso sin autenticación.
+
+---
+
+# Stack Tecnológico
 
 *   **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
 *   **Lenguaje:** [TypeScript](https://www.typescriptlang.org/) (Modo Estricto)
@@ -25,24 +75,64 @@
 *   **Componentes UI:** Construido con Radix UI y diseño base de [shadcn/ui](https://ui.shadcn.com/)
 *   **Iconografía:** [Lucide React](https://lucide.dev/)
 
+---
+
+# Base de Datos
+
+El proyecto utiliza Prisma ORM con MySQL.
+
+Modelos principales:
+
+- User
+- Case
+- Event
+- Alert
+- Telemetry
+
+Modelo de usuario:
+
+```prisma
+model User {
+  id        String   @id @default(cuid())
+  nombre    String
+  email     String   @unique
+  password  String
+  role      Role
+
+  createdAt DateTime @default(now())
+}
+
+
+
 ## Estructura del Proyecto
 
 ```text
 integra-panel/
-├── app/               # Rutas de la aplicación (Next.js App Router)
-│   ├── api/           # Endpoints del servidor (MySQL y Servicios AI)
-│   ├── layout.tsx     # Layout principal y Error Boundaries
-│   └── page.tsx       # Página principal (Dashboard)
-├── components/        # Componentes UI reutilizables
-│   ├── blocks/        # Bloques complejos (gráficos, trazabilidad)
-│   ├── ui/            # Componentes atómicos (botones, inputs)
-│   └── views/         # Vistas específicas por cada rol (RBAC)
-├── lib/               # Utilidades, esquemas y lógica de negocio
-│   ├── ai-service.ts  # Adaptador genérico para Inteligencia Artificial
-│   ├── db.ts          # Instancia global del cliente de Prisma
-│   └── store.tsx      # Gestor de estado global de la simulación
-├── prisma/            # Esquemas de base de datos MySQL
-└── public/            # Assets estáticos (imágenes, iconos)
+│
+├── app/
+│   ├── api/
+│   │   ├── login/
+│   │   └── logout/
+│   ├── login/
+│   ├── layout.tsx
+│   └── page.tsx
+│
+├── components/
+│   ├── blocks/
+│   ├── ui/
+│   └── views/
+│
+├── lib/
+│   ├── ai-service.ts
+│   ├── db.ts
+│   └── store.tsx
+│
+├── prisma/
+│   └── schema.prisma
+│
+├── middleware.ts
+│
+└── public/
 ```
 
 ## Guías Adicionales

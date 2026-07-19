@@ -66,6 +66,17 @@ La aplicación estará disponible en [http://localhost:3000](http://localhost:30
 
 ---
 
+## Autenticación
+
+El proyecto implementa:
+
+Login mediante correo y contraseña.
+Cookies HTTP para mantener la sesión.
+Middleware para proteger rutas privadas.
+Endpoint de cierre de sesión (/api/logout).
+
+
+
 ## 5. Preparación para Producción
 
 Para compilar y ejecutar la aplicación en un entorno de producción (o simularlo localmente):
