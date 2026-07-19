@@ -85,3 +85,20 @@ model Alert {
   caseId       String
   case         Case     @relation(fields: [caseId], references: [id])
 }
+
+enum Role {
+  coordinador
+  transportador
+  hospital
+  auditor
+}
+
+model User {
+  id        String   @id @default(cuid())
+  nombre    String
+  email     String   @unique
+  password  String
+  role      Role
+
+  createdAt DateTime @default(now())
+}

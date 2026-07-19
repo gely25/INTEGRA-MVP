@@ -65,6 +65,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [telemetry, setTelemetry] = useState<TelemetryPoint[]>(INITIAL_TELEMETRY)
   const [offline, setOffline] = useState<OfflineRecord[]>(INITIAL_OFFLINE)
 
+  useEffect(() => {
+  async function loadUser() {
+    try {
+      const res = await fetch("/api/me");
+
+      if (!res.ok) return;
+
+      const user = await res.json();
+
+      setRole(user.role);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  loadUser();
+}, []);
+
   // Reloj de isquemia en vivo (cuenta hacia adelante, en segundos)
   const [ischemiaSeconds, setIschemiaSeconds] = useState(INITIAL_ISCHEMIA_MIN * 60)
 
