@@ -98,6 +98,48 @@
   --danger-foreground: oklch(0.99 0.005 200);
 }
 
+/* INTEGRA dark theme — matches the #0a141f shell palette */
+.dark {
+  color-scheme: dark;
+  /* INTEGRA palette mapped to shadcn tokens */
+  --background: #0a141f;
+  --foreground: #dbe6ef;
+  --card: #0f1e2c;
+  --card-foreground: #dbe6ef;
+  --popover: #0f1e2c;
+  --popover-foreground: #dbe6ef;
+  --primary: #4fb8c4;
+  --primary-foreground: #0a141f;
+  --secondary: #132538;
+  --secondary-foreground: #dbe6ef;
+  --muted: #132538;
+  --muted-foreground: #7d94a8;
+  --accent: #1d3540;
+  --accent-foreground: #4fb8c4;
+  --destructive: #e5626a;
+  --border: #22384d;
+  --input: #22384d;
+  --ring: #4fb8c4;
+  --chart-1: #4fb8c4;
+  --chart-2: #79cf9c;
+  --chart-3: #cfa25e;
+  --chart-4: #e5626a;
+  --chart-5: #8b9dff;
+  /* status tokens */
+  --ok: #79cf9c;
+  --ok-foreground: #0a141f;
+  --warn: #cfa25e;
+  --warn-foreground: #0a141f;
+  --danger: #e5626a;
+  --danger-foreground: #0a141f;
+}
+
+/* Keyframe for the credential sweep animation */
+@keyframes sweep {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -1,177 +1,171 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useStore } from "@/lib/store"
-import { DataRow } from "@/components/blocks/data-row"
-import { AlertsPanel } from "@/components/blocks/alerts-panel"
-import { TemperatureChart } from "@/components/blocks/temperature-chart"
-import { StatusPill } from "@/components/status-pill"
+import { useState } from "react"
+import { ShieldAlert, Server, Lock, CheckCircle2, ShieldCheck, Activity, Terminal } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { QrCode, MapPin, Satellite, BatteryMedium, WifiOff, RefreshCw, Thermometer, ChevronRight, Package, AlertTriangle, BarChart2 } from "lucide-react"
 
-export function TransportadorView() {
-  const { caseData, offline, syncOffline } = useStore()
-  const [openDrawer, setOpenDrawer] = useState<"ruta" | "termico" | null>(null)
+function NodeStatus({ name, status, blocks, latency }: { name: string; status: "online" | "offline" | "isolated"; blocks: number; latency: number }) {
+  const statusColor = {
+    online: "bg-[#79cf9c] text-[#0a141f]",
+    offline: "bg-[#e5626a] text-white",
+    isolated: "bg-[#cfa25e] text-[#0a141f]"
+  }
 
-  const pending = offline.filter((o) => !o.synced).length
+  const label = {
+    online: "Online",
+    offline: "Offline",
+    isolated: "Aislado (Ransomware)"
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Fila 1: Temperatura central + Estado clave */}
-      <div className="grid gap-6 md:grid-cols-12">
-        {/* Temperatura heroica */}
-        <div className="col-span-12 lg:col-span-5">
-          <Card className="h-full border-l-4 border-l-blue-500 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-            <CardContent className="p-8 flex flex-col items-center justify-center gap-3 h-full">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Thermometer className="h-5 w-5 text-blue-500" />
-                <span className="text-sm font-medium uppercase tracking-widest">Temperatura Interna</span>
-              </div>
-              <span className="text-8xl font-bold tracking-tighter tabular-nums">
-                {caseData.tempInternal.toFixed(1)}°
-              </span>
-              <StatusPill tone={caseData.tempInternal >= 2 && caseData.tempInternal <= 8 ? "ok" : "danger"}>
-                {caseData.tempInternal >= 2 && caseData.tempInternal <= 8 ? "Dentro de rango (2–8°C)" : "¡FUERA DE RANGO!"}
-              </StatusPill>
-              <Button variant="outline" size="sm" className="mt-2" onClick={() => setOpenDrawer("termico")}>
-                <BarChart2 className="mr-2 h-3 w-3" /> Ver historial térmico <ChevronRight className="ml-1 h-3 w-3" />
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Métricas del dispositivo */}
-        <div className="col-span-12 lg:col-span-7 flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Card>
-              <CardContent className="p-4 flex flex-col gap-1">
-                <span className="text-xs font-medium uppercase text-muted-foreground flex items-center gap-1">
-                  <Satellite className="h-3 w-3" /> GPS
-                </span>
-                <span className="font-mono text-2xl font-bold">{caseData.gpsActive ? "ACTIVO" : "OFF"}</span>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 flex flex-col gap-1">
-                <span className="text-xs font-medium uppercase text-muted-foreground flex items-center gap-1">
-                  <BatteryMedium className="h-3 w-3" /> Batería
-                </span>
-                <span className="font-mono text-2xl font-bold">{caseData.battery}%</span>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 flex flex-col gap-1">
-                <span className="text-xs font-medium uppercase text-muted-foreground flex items-center gap-1">
-                  <WifiOff className="h-3 w-3" /> Buffer Offline
-                </span>
-                <span className="font-mono text-lg font-bold">{pending ? `${pending} pendientes` : "OK"}</span>
-                {pending > 0 && (
-                  <Button size="sm" variant="outline" className="mt-1 h-7 text-xs" onClick={() => { syncOffline(); toast.success("Lecturas reenviadas") }}>
-                    <RefreshCw className="mr-1 h-3 w-3" /> Reenviar
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Ruta resumida */}
-          <Card className="flex-1">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <MapPin className="h-4 w-4 text-primary" /> Ruta
-                </CardTitle>
-                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setOpenDrawer("ruta")}>
-                  Ver detalle <ChevronRight className="ml-1 h-3 w-3" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{caseData.originCity}</span>
-                <span className="text-xs text-muted-foreground">{caseData.currentLocation}</span>
-                <span className="font-medium">{caseData.destinationCity}</span>
-              </div>
-              <Progress value={caseData.routeProgress} className="h-3" />
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Progreso: <strong className="text-foreground font-mono">{caseData.routeProgress}%</strong></span>
-                <span>ETA: <strong className="text-foreground font-mono">{caseData.eta}</strong></span>
-              </div>
-            </CardContent>
-          </Card>
+    <div className="flex items-center justify-between p-3 rounded-lg border border-[#22384d] bg-[#132538]">
+      <div className="flex items-center gap-2">
+        <Server className="h-4 w-4 text-[#93a4b3]" />
+        <div>
+          <p className="text-xs font-mono font-bold text-[#f0f5f9]">{name}</p>
+          <p className="text-[10px] text-[#7d94a8]">Bloques: {blocks} · Latencia: {latency}ms</p>
         </div>
       </div>
+      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${statusColor[status]}`}>
+        {label[status]}
+      </span>
+    </div>
+  )
+}
 
-      {/* Fila 2: Integridad + Alertas */}
-      <div className="grid gap-6 md:grid-cols-12">
-        <div className="col-span-12 lg:col-span-4">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-4 w-4 text-primary" /> Integridad del Contenedor
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="divide-y">
-              <DataRow label="Precinto" value={<StatusPill tone="ok">{caseData.sealStatus}</StatusPill>} />
-              <DataRow label="Cadena de frío" value={<StatusPill tone="ok">{caseData.coldChain}</StatusPill>} />
-              <DataRow label="Dispositivo ID" value={caseData.deviceId} mono />
-              <DataRow label="Contenedor" value={caseData.containerId} mono />
-            </CardContent>
-          </Card>
+export function TransportadorView() {
+  const { pamGranted, setPamGranted, ransomwareActive, simTimeHours, scenario } = useStore()
+  const [requesting, setRequesting] = useState(false)
+
+  const handleRequestPAM = () => {
+    setRequesting(true)
+    setTimeout(() => {
+      setPamGranted(true)
+      setRequesting(false)
+      toast.success("Acceso Privilegiado Temporal (PAM) Aprobado", {
+        description: "Sesión grabada y registrada en auditoría."
+      })
+    }, 1200)
+  }
+
+  if (!pamGranted) {
+    return (
+      <div className="rounded-lg border border-[#22384d] bg-[#0f1e2c] p-8 text-center max-w-md mx-auto my-12">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#e5626a]/15 text-[#e5626a] mb-4">
+          <Lock className="h-6 w-6" />
         </div>
-        <div className="col-span-12 lg:col-span-8">
-          <AlertsPanel title="Alertas logísticas en ruta" description="Temperatura, shocks y conexión." />
+        <h3 className="text-lg font-bold text-[#f0f5f9] mb-2">Acceso Zero Trust por Defecto</h3>
+        <p className="text-xs text-[#7d94a8] mb-6 leading-relaxed">
+          Su rol de Proveedor IT no cuenta con permisos permanentes ni acceso a datos clínicos de pacientes.
+          Requiere solicitar Acceso Privilegiado Temporal (PAM) para mantenimiento de infraestructura.
+        </p>
+        <Button
+          onClick={handleRequestPAM}
+          disabled={requesting}
+          className="w-full bg-[#4fb8c4] hover:bg-[#4fb8c4]/80 text-[#0a141f] font-bold"
+        >
+          {requesting ? "Verificando token mTLS/TOTP..." : "Solicitar acceso PAM"}
+        </Button>
+      </div>
+    )
+  }
+
+  // Ransomware condition
+  const isRansomwareIsolated = scenario === "ransomware" && simTimeHours >= 12 && !ransomwareActive
+
+  return (
+    <div className="space-y-5">
+      {/* Active PAM session banner */}
+      <div className="rounded-lg border border-[#79cf9c]/30 bg-[#1c3128] p-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-[#79cf9c]" />
+          <span className="text-xs font-semibold text-[#79cf9c]">Sesión PAM Activa (Mantenimiento de Red)</span>
         </div>
+        <span className="text-[10px] font-mono text-[#7d94a8]">Sesión ID: PAM-9482 · Grabación: ON</span>
       </div>
 
-      {/* DRAWER: Detalle de Ruta */}
-      <Sheet open={openDrawer === "ruta"} onOpenChange={(o) => !o && setOpenDrawer(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Detalle de Ruta</SheetTitle>
-            <SheetDescription>Progreso detallado del traslado y coordenadas GPS.</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 space-y-4">
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{caseData.originCity}</span>
-                  <span className="text-muted-foreground">{caseData.currentLocation}</span>
-                  <span className="font-medium">{caseData.destinationCity}</span>
-                </div>
-                <Progress value={caseData.routeProgress} className="h-3" />
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <DataRow label="Progreso" value={`${caseData.routeProgress}%`} mono />
-                  <DataRow label="ETA" value={caseData.eta} mono />
-                  <DataRow label="Lat/Lon" value="-32.412, -63.240" mono />
-                  <DataRow label="Custodia" value={<StatusPill tone="ok">Activa</StatusPill>} />
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="rounded-lg border overflow-hidden h-64 bg-muted flex items-center justify-center text-muted-foreground text-sm">
-              [Mapa GPS integrado — pendiente de implementación]
+      {/* Ransomware Banner */}
+      {scenario === "ransomware" && simTimeHours >= 12 && ransomwareActive && (
+        <div className="rounded-lg border border-[#e5626a]/40 bg-[#2a1214] p-4">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="h-5 w-5 text-[#e5626a] shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-[#e5626a]">INCIDENTE ACTIVO: Ransomware en Nodo Donante</p>
+              <p className="text-xs text-[#7d94a8] mt-1">
+                peer0.hospitaldona reportó firmas de archivo anómalas (patrón de cifrado).
+                El IDS aisló el nodo del canal blockchain. La red continúa operativa gracias a los
+                peers redundantes en INCUCAI y Hospital Receptor.
+              </p>
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
 
-      {/* DRAWER: Historial Térmico */}
-      <Sheet open={openDrawer === "termico"} onOpenChange={(o) => !o && setOpenDrawer(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2"><Thermometer className="h-4 w-4" /> Historial Térmico</SheetTitle>
-            <SheetDescription>Variación de temperatura del contenedor durante el traslado.</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
-            <TemperatureChart />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Health / Nodes status */}
+      <div className="rounded-lg border border-[#22384d] bg-[#0f1e2c] p-4">
+        <h3 className="text-sm font-semibold text-[#f0f5f9] mb-3 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-[#4fb8c4]" /> Salud de la Red Blockchain
+        </h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <NodeStatus
+            name="peer0.incucai (INCUCAI)"
+            status="online"
+            blocks={14983}
+            latency={12}
+          />
+          <NodeStatus
+            name="peer0.hospitalrec (Receptor)"
+            status="online"
+            blocks={14983}
+            latency={15}
+          />
+          <NodeStatus
+            name="peer0.hospitaldona (Donante)"
+            status={
+              scenario === "ransomware" && simTimeHours >= 12 && ransomwareActive
+                ? "isolated"
+                : "online"
+            }
+            blocks={scenario === "ransomware" && simTimeHours >= 12 && ransomwareActive ? 14920 : 14983}
+            latency={scenario === "ransomware" && simTimeHours >= 12 && ransomwareActive ? 999 : 14}
+          />
+          <NodeStatus
+            name="orderer.raft (Consenso)"
+            status="online"
+            blocks={14983}
+            latency={8}
+          />
+        </div>
+      </div>
+
+      {/* Infrastructure logs */}
+      <div className="rounded-lg border border-[#22384d] bg-[#0f1e2c] p-4">
+        <h3 className="text-sm font-semibold text-[#f0f5f9] mb-3 flex items-center gap-2">
+          <Terminal className="h-4 w-4 text-[#4fb8c4]" /> Logs de Infraestructura (PAM)
+        </h3>
+        <div className="bg-[#070d12] p-3 rounded-lg border border-[#22384d] font-mono text-[10px] text-[#7d94a8] space-y-1 h-40 overflow-y-auto">
+          <p>[00:00:01] channel=custody-channel joined successfully by 3 peers</p>
+          <p>[00:00:02] consensus=Raft initialized with 3 orderer endpoints</p>
+          <p>[01:30:15] link-device: authorized TLS tunnel for DEVICE-001</p>
+          {scenario === "ransomware" && simTimeHours >= 12 && (
+            <>
+              <p className="text-[#e5626a]">[12:00:00] SECURITY ALERT: cipher pattern detected on peer0.hospitaldona</p>
+              <p className="text-[#e5626a]">[12:00:05] SECURITY STATE: isolation policy enforced for peer0.hospitaldona</p>
+              <p className="text-[#cfa25e]">[12:00:10] consensus: raft orderer continues with 2/3 active peers</p>
+              {simTimeHours >= 12.25 && (
+                <>
+                  <p className="text-[#79cf9c]">[12:15:00] PAM ACTION: restore peer0.hospitaldona from offline backup</p>
+                  <p className="text-[#79cf9c]">[12:15:30] sync: peer0.hospitaldona catching up to block #14983</p>
+                  <p className="text-[#79cf9c]">[12:16:00] status: all nodes synchronized</p>
+                </>
+              )}
+            </>
+          )}
+          {!ransomwareActive && <p>[{Math.floor(simTimeHours).toString().padStart(2, "0")}:14:00] keep-alive ping OK from 4 endpoints</p>}
+        </div>
+      </div>
     </div>
   )
 }

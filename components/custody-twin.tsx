@@ -1,7 +1,7 @@
 "use client"
 
 import { useStore } from "@/lib/store"
-import { computeIschemia, fmtClock } from "@/lib/format"
+import { computeIschemia, fmtSimHours } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import {
   Thermometer,
@@ -22,9 +22,9 @@ interface Metric {
 }
 
 export function CustodyTwin() {
-  const { caseData, alerts, ischemiaSeconds } = useStore()
+  const { caseData, alerts, simTimeHours } = useStore()
   const activeAlerts = alerts.filter((a) => !a.acknowledged)
-  const isc = computeIschemia(ischemiaSeconds, caseData.ischemiaWindowMin, caseData.ischemiaTargetMin)
+  const isc = computeIschemia(simTimeHours, caseData.ischemiaWindowHours, caseData.ischemiaTargetHours)
 
   const tempTone: Metric["tone"] = caseData.tempInternal > 8 ? "danger" : caseData.tempInternal > 6 ? "warn" : "ok"
   const battTone: Metric["tone"] = caseData.battery < 20 ? "danger" : caseData.battery < 40 ? "warn" : "ok"
@@ -41,20 +41,20 @@ export function CustodyTwin() {
   ]
 
   const toneText: Record<Metric["tone"], string> = {
-    ok: "text-ok",
-    warn: "text-warn",
-    danger: "text-danger",
-    info: "text-primary",
+    ok: "text-[#79cf9c]",
+    warn: "text-[#cfa25e]",
+    danger: "text-[#e5626a]",
+    info: "text-[#4fb8c4]",
   }
   const toneBg: Record<Metric["tone"], string> = {
-    ok: "bg-ok/10 border-ok/25",
-    warn: "bg-warn/10 border-warn/30",
-    danger: "bg-danger/10 border-danger/40",
-    info: "bg-primary/10 border-primary/25",
+    ok: "bg-[#79cf9c]/10 border-[#79cf9c]/25",
+    warn: "bg-[#cfa25e]/10 border-[#cfa25e]/30",
+    danger: "bg-[#e5626a]/10 border-[#e5626a]/40",
+    info: "bg-[#4fb8c4]/10 border-[#4fb8c4]/25",
   }
 
   const ringColor =
-    isc.level === "danger" ? "ring-danger/40" : isc.level === "warn" ? "ring-warn/40" : "ring-ok/40"
+    isc.level === "danger" ? "ring-[#e5626a]/40" : isc.level === "warn" ? "ring-[#cfa25e]/40" : "ring-[#79cf9c]/40"
 
   return (
     <div className="grid items-center gap-6 lg:grid-cols-[1fr_auto_1fr]">
@@ -69,14 +69,14 @@ export function CustodyTwin() {
       <div className="order-1 flex flex-col items-center lg:order-2">
         <div
           className={cn(
-            "relative flex h-52 w-52 items-center justify-center rounded-full bg-secondary/60 ring-4 ring-offset-2 ring-offset-card",
+            "relative flex h-52 w-52 items-center justify-center rounded-full bg-[#132538]/60 ring-4 ring-offset-2 ring-offset-[#0f1e2c]",
             ringColor,
           )}
         >
           <span
             className={cn(
               "absolute inset-0 animate-pulse rounded-full opacity-40",
-              isc.level === "danger" ? "bg-danger/10" : isc.level === "warn" ? "bg-warn/10" : "bg-ok/10",
+              isc.level === "danger" ? "bg-[#e5626a]/10" : isc.level === "warn" ? "bg-[#cfa25e]/10" : "bg-[#79cf9c]/10",
             )}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -87,10 +87,10 @@ export function CustodyTwin() {
           />
         </div>
         <div className="mt-3 text-center">
-          <p className="font-mono text-sm font-semibold tabular-nums text-foreground">
-            {fmtClock(isc.remainingSeconds)}
+          <p className="font-mono text-sm font-semibold tabular-nums text-[#f0f5f9]">
+            {fmtSimHours(isc.remainingHours)}
           </p>
-          <p className="text-xs text-muted-foreground">isquemia fría restante</p>
+          <p className="text-xs text-[#7d94a8]">isquemia fría restante</p>
         </div>
       </div>
 
@@ -116,7 +116,7 @@ function MetricCard({
   const Icon = m.icon
   return (
     <div className={cn("rounded-lg border p-3", toneBg[m.tone])}>
-      <div className="flex items-center gap-1.5 text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-[#7d94a8]">
         <Icon className={cn("h-3.5 w-3.5", toneText[m.tone])} />
         <span className="text-[11px] font-medium uppercase tracking-wide">{m.label}</span>
       </div>

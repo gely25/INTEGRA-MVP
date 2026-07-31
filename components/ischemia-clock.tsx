@@ -1,38 +1,48 @@
 "use client"
 
 import { useStore } from "@/lib/store"
-import { computeIschemia, fmtClock, fmtDuration } from "@/lib/format"
+import { computeIschemia, fmtSimHours } from "@/lib/format"
+import { ISCHEMIA_ALERT_HOURS } from "@/lib/case-data"
 import { cn } from "@/lib/utils"
 import { Clock, AlertTriangle } from "lucide-react"
 
 const levelStyles = {
-  ok: { ring: "text-ok", chip: "bg-ok/15 text-ok border-ok/30", label: "Dentro de ventana óptima" },
+  ok: {
+    ring:  "text-[#79cf9c]",
+    chip:  "bg-[#79cf9c]/15 text-[#79cf9c] border-[#79cf9c]/30",
+    label: "Dentro de ventana óptima",
+  },
   warn: {
-    ring: "text-warn",
-    chip: "bg-warn/15 text-warn border-warn/40",
+    ring:  "text-[#cfa25e]",
+    chip:  "bg-[#cfa25e]/15 text-[#cfa25e] border-[#cfa25e]/40",
     label: "Superó ventana óptima (24h)",
   },
   danger: {
-    ring: "text-danger",
-    chip: "bg-danger/15 text-danger border-danger/40",
+    ring:  "text-[#e5626a]",
+    chip:  "bg-[#e5626a]/15 text-[#e5626a] border-[#e5626a]/40",
     label: "Crítico — cercano al límite",
   },
 } as const
 
 export function IschemiaClock({ compact = false }: { compact?: boolean }) {
-  const { caseData, ischemiaSeconds } = useStore()
+  const { caseData, simTimeHours } = useStore()
+
   const isc = computeIschemia(
-    ischemiaSeconds,
-    caseData.ischemiaWindowMin,
-    caseData.ischemiaTargetMin,
+    simTimeHours,
+    caseData.ischemiaWindowHours,
+    caseData.ischemiaTargetHours,
+    ISCHEMIA_ALERT_HOURS,
   )
   const s = levelStyles[isc.level]
 
-  // anillo de progreso
   const radius = compact ? 30 : 56
-  const stroke = compact ? 6 : 9
-  const c = 2 * Math.PI * radius
-  const dash = (isc.pctOfWindow / 100) * c
+  const stroke = compact ? 6  : 9
+  const c      = 2 * Math.PI * radius
+  const dash   = (isc.pctOfWindow / 100) * c
+
+  // 20h alert marker angle on the ring
+  const alertPct   = (ISCHEMIA_ALERT_HOURS / caseData.ischemiaWindowHours) * 100
+  const alertAngle = (alertPct / 100) * 360 - 90 // -90 to start from top
 
   if (compact) {
     return (
@@ -49,9 +59,8 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
               cy={(radius * 2 + stroke) / 2}
               r={radius}
               fill="none"
-              stroke="currentColor"
+              stroke="#132538"
               strokeWidth={stroke}
-              className="text-muted"
             />
             <circle
               cx={(radius * 2 + stroke) / 2}
@@ -70,8 +79,10 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
           </div>
         </div>
         <div className="leading-tight">
-          <p className="font-mono text-sm font-semibold tabular-nums">{fmtClock(isc.remainingSeconds)}</p>
-          <p className="text-xs text-muted-foreground">restante al límite</p>
+          <p className="font-mono text-sm font-semibold tabular-nums text-[#f0f5f9]">
+            {fmtSimHours(isc.remainingHours)}
+          </p>
+          <p className="text-xs text-[#7d94a8]">restante al límite</p>
         </div>
       </div>
     )
@@ -79,22 +90,27 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
-      <div className="relative shrink-0" style={{ width: radius * 2 + stroke, height: radius * 2 + stroke }}>
+      {/* Circular gauge */}
+      <div
+        className="relative shrink-0"
+        style={{ width: radius * 2 + stroke, height: radius * 2 + stroke }}
+      >
         <svg
           className="-rotate-90"
           width={radius * 2 + stroke}
           height={radius * 2 + stroke}
           viewBox={`0 0 ${radius * 2 + stroke} ${radius * 2 + stroke}`}
         >
+          {/* Background ring */}
           <circle
             cx={(radius * 2 + stroke) / 2}
             cy={(radius * 2 + stroke) / 2}
             r={radius}
             fill="none"
-            stroke="currentColor"
+            stroke="#132538"
             strokeWidth={stroke}
-            className="text-muted"
           />
+          {/* Progress arc */}
           <circle
             cx={(radius * 2 + stroke) / 2}
             cy={(radius * 2 + stroke) / 2}
@@ -106,15 +122,32 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
             strokeDasharray={`${dash} ${c}`}
             className={cn("transition-all duration-1000 ease-linear", s.ring)}
           />
+          {/* 20h marker dot */}
+          <circle
+            cx={
+              (radius * 2 + stroke) / 2 +
+              radius *
+                Math.cos((alertAngle * Math.PI) / 180)
+            }
+            cy={
+              (radius * 2 + stroke) / 2 +
+              radius *
+                Math.sin((alertAngle * Math.PI) / 180)
+            }
+            r={4}
+            fill="#cfa25e"
+            className="transition-all"
+          />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xs text-muted-foreground">consumido</span>
+          <span className="text-xs text-[#7d94a8]">consumido</span>
           <span className={cn("font-mono text-lg font-bold tabular-nums", s.ring)}>
             {Math.round(isc.pctOfWindow)}%
           </span>
         </div>
       </div>
 
+      {/* Info column */}
       <div className="flex-1 space-y-2 text-center sm:text-left">
         <div
           className={cn(
@@ -125,28 +158,32 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
           {isc.level !== "ok" && <AlertTriangle className="h-3 w-3" />}
           {s.label}
         </div>
+
         <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Tiempo restante al límite</p>
+          <p className="text-xs uppercase tracking-wide text-[#7d94a8]">Tiempo restante al límite</p>
           <p className={cn("font-mono text-2xl font-bold tabular-nums", s.ring)}>
-            {fmtClock(isc.remainingSeconds)}
+            {fmtSimHours(isc.remainingHours)}
           </p>
         </div>
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground sm:justify-start">
+
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-xs text-[#7d94a8] sm:justify-start">
           <span>
             Transcurrido:{" "}
-            <span className="font-mono font-medium text-foreground tabular-nums">
-              {fmtDuration(isc.elapsedSeconds)}
+            <span className="font-mono font-medium text-[#dbe6ef] tabular-nums">
+              {fmtSimHours(isc.elapsedHours)}
             </span>
           </span>
           <span>
-            Ventana óptima (24h):{" "}
-            <span className="font-mono font-medium text-foreground tabular-nums">
-              {fmtDuration(isc.remainingToTargetSeconds)} rest.
+            Ventana óptima:{" "}
+            <span className="font-mono font-medium text-[#dbe6ef] tabular-nums">
+              {fmtSimHours(isc.remainingToTargetHours)} rest.
             </span>
           </span>
           <span>
-            Límite clínico:{" "}
-            <span className="font-mono font-medium text-foreground">36h 00m</span>
+            {isc.pastAlert && (
+              <span className="text-[#cfa25e] font-semibold">⚠ Umbral 20h superado</span>
+            )}
+            {!isc.pastAlert && <>Alerta: <span className="font-mono font-medium text-[#dbe6ef]">a las 20h</span></>}
           </span>
         </div>
       </div>

@@ -1,47 +1,60 @@
-export function fmtTime(iso: string) {
-  const d = new Date(iso)
-  return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
-}
-
-export function fmtClock(totalSeconds: number) {
+export function fmtClock(totalSeconds: number): string {
   const h = Math.floor(totalSeconds / 3600)
   const m = Math.floor((totalSeconds % 3600) / 60)
   const s = totalSeconds % 60
   return `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`
 }
 
-export function fmtDuration(totalSeconds: number) {
+export function fmtDuration(totalSeconds: number): string {
   const h = Math.floor(totalSeconds / 3600)
   const m = Math.floor((totalSeconds % 3600) / 60)
   return `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m`
 }
 
+/** Format simulated hours (e.g. 10.5 → "10h 30m") */
+export function fmtSimHours(tHours: number): string {
+  const h = Math.floor(tHours)
+  const m = Math.round((tHours - h) * 60)
+  return `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m`
+}
+
+/** Format as T+HH:MM label */
+export function fmtSimLabel(tHours: number): string {
+  const h = Math.floor(tHours)
+  const m = Math.round((tHours - h) * 60)
+  return `T+${String(h).padStart(2, "0")}h${String(m).padStart(2, "0")}m`
+}
+
 export interface IschemiaState {
-  elapsedSeconds: number
-  remainingSeconds: number
-  remainingToTargetSeconds: number
-  pctOfWindow: number // 0..100 consumido de la ventana límite
+  elapsedHours: number
+  remainingHours: number
+  remainingToTargetHours: number
+  pctOfWindow: number   // 0..100 consumed of the window limit
   level: "ok" | "warn" | "danger"
+  pastAlert: boolean    // >= 20h
 }
 
 export function computeIschemia(
-  elapsedSeconds: number,
-  windowMinutes: number,
-  targetMinutes: number,
+  elapsedHours: number,
+  windowHours: number,
+  targetHours: number,
+  alertHours = 20,
 ): IschemiaState {
-  const windowSec = windowMinutes * 60
-  const targetSec = targetMinutes * 60
-  const remainingSeconds = Math.max(0, windowSec - elapsedSeconds)
-  const remainingToTargetSeconds = Math.max(0, targetSec - elapsedSeconds)
-  const pctOfWindow = Math.min(100, (elapsedSeconds / windowSec) * 100)
+  const remainingHours        = Math.max(0, windowHours - elapsedHours)
+  const remainingToTargetHours = Math.max(0, targetHours - elapsedHours)
+  const pctOfWindow            = Math.min(100, (elapsedHours / windowHours) * 100)
+  const pastAlert              = elapsedHours >= alertHours
+
   let level: IschemiaState["level"] = "ok"
-  if (pctOfWindow >= 85) level = "danger"
-  else if (elapsedSeconds >= targetSec) level = "warn"
+  if (pctOfWindow >= 85)              level = "danger"
+  else if (elapsedHours >= targetHours) level = "warn"
+
   return {
-    elapsedSeconds,
-    remainingSeconds,
-    remainingToTargetSeconds,
+    elapsedHours,
+    remainingHours,
+    remainingToTargetHours,
     pctOfWindow,
     level,
+    pastAlert,
   }
 }

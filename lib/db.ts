@@ -1,13 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+// Fuera de alcance del MVP actual — el store corre en memoria (ver lib/store.tsx). Persistencia real pendiente de una siguiente iteración.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const prisma: any = {}
 
-const prismaClientSingleton = () => {
-  return new PrismaClient()
-}
 
-declare global {
-  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>
-}
-
-export const prisma = globalThis.prismaGlobal ?? prismaClientSingleton()
-
-if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma

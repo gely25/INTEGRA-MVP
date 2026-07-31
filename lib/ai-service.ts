@@ -36,7 +36,7 @@ export async function generateSimulationData(context: SimulationContext): Promis
   // const response = await fetch('https://tu-api-de-ia.com/simulate', { method: 'POST', body: JSON.stringify(context) });
   // return await response.json();
   
-  // LOGICA PLACEHOLDER ACTUAL (Simula el comportamiento de una IA evaluando el contexto)
+  // LOGICA DE DETECCION BASADA EN DESVIACION (Z-SCORE / PROMEDIO MOVIL DE ULTIMAS LECTURAS)
   console.log("[AI-SERVICE] Generando simulación para contexto:", context);
 
   // Simula un ligero retraso de red como si llamara a una API de IA
@@ -47,13 +47,24 @@ export async function generateSimulationData(context: SimulationContext): Promis
   const newExternal = +(context.currentExternalTemp + (Math.random() - 0.5) * 0.6).toFixed(1);
   const newBattery = Math.max(0, context.batteryLevel - (Math.random() < 0.3 ? 1 : 0));
 
-  // Simular una anomalía si la temperatura interna sube demasiado
+  // Histórico simulated/baseline para cálculo de ventana de 5 lecturas
+  // Rango estándar óptimo: 3.0°C - 3.4°C (media ~3.16, std ~0.15)
+  const recentReadings = [3.0, 3.1, 3.0, 3.2, 3.3];
+  const windowSize = recentReadings.length;
+  const mean = recentReadings.reduce((acc, val) => acc + val, 0) / windowSize;
+  const variance = recentReadings.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / windowSize;
+  const stdDev = Math.sqrt(variance) || 0.1; // Evitar división por cero
+
+  // Z-Score: desviación respecto a las últimas lecturas
+  const zScore = Math.abs(newInternal - mean) / stdDev;
+
   let hasAnomaly = false;
   let anomalyDescription;
 
-  if (newInternal >= 8.0) {
+  // Si la lectura actual se desvía más de 3 desviaciones estándar (z-score > 3.0) o cruza umbral térmico extremo (>7.5)
+  if (zScore > 3.0 || newInternal >= 7.5) {
     hasAnomaly = true;
-    anomalyDescription = "Peligro: Ruptura inminente de cadena de frío detectada por tendencia alcista persistente.";
+    anomalyDescription = `IA Alerta: Desviación anómala detectada (Z-Score: ${zScore.toFixed(2)}, Temp: ${newInternal}°C vs Prom. ${mean.toFixed(2)}°C).`;
   }
 
   return {
@@ -64,3 +75,4 @@ export async function generateSimulationData(context: SimulationContext): Promis
     anomalyDescription,
   };
 }
+
