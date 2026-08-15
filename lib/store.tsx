@@ -72,11 +72,11 @@ interface StoreValue {
   // Simulation clock
   simTimeHours: number
   simRunning: boolean
-  simSpeed: 60 | 360 | 1800
+  simSpeed: 60 | 360 | 1800 | 3600
   startSim: () => void
   pauseSim: () => void
   resetSim: () => void
-  setSimSpeed: (s: 60 | 360 | 1800) => void
+  setSimSpeed: (s: 60 | 360 | 1800 | 3600) => void
 
   // Case data
   caseData: CaseSnapshot
@@ -113,7 +113,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Simulation clock
   const [simTimeHours, setSimTimeHours] = useState(0)
   const [simRunning, setSimRunning] = useState(true)
-  const [simSpeed, setSimSpeedState] = useState<60 | 360 | 1800>(360)
+  const [simSpeed, setSimSpeedState] = useState<60 | 360 | 1800 | 3600>(360)
 
   // Case state
   const [caseData, setCaseData] = useState<CaseSnapshot>(INITIAL_CASE)
@@ -368,7 +368,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     firedRef.current = new Set()
   }, [])
 
-  const setSimSpeed = useCallback((s: 60 | 360 | 1800) => {
+  const setSimSpeed = useCallback((s: 60 | 360 | 1800 | 3600) => {
     setSimSpeedState(s)
   }, [])
 

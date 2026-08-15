@@ -9,11 +9,11 @@
 *   **Trazabilidad Completa (Simulación Blockchain):** Registro inmutable de eventos de custodia (creación del caso, inicio de traslado, alertas).
 *   **Telemetría IoT en Tiempo Real (Simulado con IA y Backend):** Monitoreo continuo de la temperatura interna y externa, batería del contenedor y posición GPS.
 *   **Gemelo Operativo 3D:** Visualización del estado digital del órgano y las condiciones de su entorno.
-*   **Gestión por Roles (RBAC):** Interfaces personalizadas dependiendo del actor logístico:
-    *    **Coordinador:** Visión global, control de isquemia y mando de alertas.
-    *    **Transportador:** Resumen de ruta, progreso y estado del hardware.
-    *    **Hospital Receptor:** Checklist estricto de recepción validando cadena de frío y firmas criptográficas.
-    *    **Auditor:** Resumen forense para evaluar la integridad del traslado post-mortem.
+*   **Gestión por Roles (RBAC & API Gateway):** Interfaz gráfica de referencia que demuestra la exposición de endpoints y capacidades entregadas por la **API de INTEGRA (Hyperledger Fabric Gateway)** mediante RBAC para cada actor (los sistemas legados como SINTRA/HIS consumen estos endpoints directamente):
+    *    **Coordinador Nacional (INCUCAI):** Visión global, asignación/doble firma y recepción de alertas críticas prioritarias.
+    *    **Médico Trasplantador (Hospital):** Aceptación del caso, confirmación de recepción y prueba de fraude (Endorsement Policy).
+    *    **Auditor Externo:** Resumen forense `audit-channel` (read-only), eventos de salida en tránsito y expediente post-mortem completo.
+    *    **Telemetría Edge (Dispositivos IoT):** Sensores de contenedor con stream MQTT/mTLS (certificados TTL 72h) sin inicio de sesión humano.
 *   **Integración Abierta con Inteligencia Artificial:** Arquitectura lista para conectar modelos de predicción de anomalías basados en la telemetría del contenedor.
 
 ## Stack Tecnológico

@@ -63,6 +63,16 @@ export const ROLES: RoleInfo[] = [
   },
 ]
 
+/**
+ * Roles que inician sesión como HUMANOS en el portal.
+ * El dispositivo IoT NO aparece aquí — se autentica solo con su certificado
+ * de dispositivo (IoT CA, TTL 72h) sin intervención humana.
+ */
+export const HUMAN_ROLES: RoleInfo[] = ROLES.filter((r) => r.id !== "iot")
+
+/** Información del dispositivo IoT para el widget de Telemetría Edge */
+export const IOT_ROLE: RoleInfo = ROLES.find((r) => r.id === "iot")!
+
 // ─── Case Snapshot ────────────────────────────────────────────────────────────
 export type CaseStatus    = "Preparado" | "En traslado" | "Recibido" | "Cerrado"
 export type CustodyStatus = "Pendiente" | "Activa" | "Recepción confirmada"

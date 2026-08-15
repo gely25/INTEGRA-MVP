@@ -1,9 +1,9 @@
 "use client"
 
 import { useStore } from "@/lib/store"
-import type { RoleActor } from "@/lib/case-data"
+import type { RoleActor, AlertItem } from "@/lib/case-data"
 import { cn } from "@/lib/utils"
-import { AlertTriangle, Info, Check, BellRing, Shield } from "lucide-react"
+import { AlertTriangle, Info, Check, BellRing, Shield, ShieldAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const levelMeta = {
@@ -20,6 +20,7 @@ interface Props {
   role?: RoleActor
   title?: string
   description?: string
+  onActionClick?: (alert: AlertItem) => void
 }
 
 export function AlertsPanel({
@@ -83,16 +84,17 @@ export function AlertsPanel({
                   )}
                   {a.acknowledged ? (
                     <span className="inline-flex items-center gap-1 text-[11px] text-[#79cf9c]">
-                      <Check className="h-3 w-3" /> Atendida
+                      <Check className="h-3 w-3" /> Resuelta
                     </span>
                   ) : canAcknowledge ? (
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-6 px-2 text-[11px] border-[#22384d] bg-transparent text-[#dbe6ef] hover:bg-[#132538]"
-                      onClick={() => acknowledgeAlert(a.id)}
+                      className="h-6 px-2.5 text-[11px] border-[#4fb8c4]/40 bg-[#4fb8c4]/10 text-[#4fb8c4] hover:bg-[#4fb8c4]/20 flex items-center gap-1 font-bold"
+                      onClick={() => onActionClick ? onActionClick(a) : acknowledgeAlert(a.id)}
                     >
-                      Atender
+                      <ShieldAlert className="h-3 w-3" />
+                      Resolver
                     </Button>
                   ) : (
                     <span className="text-[11px] text-[#cfa25e]">Pendiente</span>

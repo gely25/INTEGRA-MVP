@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { StoreProvider, useStore } from "@/lib/store"
-import { ROLES, type RoleInfo } from "@/lib/case-data"
+import { HUMAN_ROLES, IOT_ROLE, type RoleInfo } from "@/lib/case-data"
 import { CoordinadorView } from "@/components/views/coordinador-view"
 import { HospitalView } from "@/components/views/hospital-view"
 import { AuditorView } from "@/components/views/auditor-view"
 import { IotView } from "@/components/views/iot-view"
 import { TransportadorView } from "@/components/views/transportador-view" // IT Prov
 import { SimClockBar } from "@/components/blocks/sim-clock-bar"
-import { Shield, Key, Database, ChevronRight, LayoutDashboard, LogOut, Terminal, Lock, Heart, RefreshCw } from "lucide-react"
+import { Shield, Key, Database, ChevronRight, LayoutDashboard, LogOut, Terminal, Lock, Heart, RefreshCw, Clock, Thermometer, Radio, ChevronDown, Info } from "lucide-react"
 import { toast } from "sonner"
 
 export default function DashboardPage() {
@@ -29,9 +29,11 @@ function MainLayout() {
     scenario,
     setScenario,
     simTimeHours,
+    caseData,
   } = useStore()
 
   const [selectedRoleInfo, setSelectedRoleInfo] = useState<RoleInfo | null>(null)
+  const [showEdgeSim, setShowEdgeSim] = useState(false)
 
   // 1.5s Verifying credentials animation
   useEffect(() => {
@@ -58,9 +60,14 @@ function MainLayout() {
               <p className="text-[10px] text-[#54697c] uppercase tracking-wider font-semibold">Trazabilidad de Órganos</p>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-[#54697c] bg-[#0f1e2c] border border-[#22384d] px-2 py-1 rounded">
-            PROTOTIPO v2.0
-          </span>
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-[10px] font-mono text-[#54697c] bg-[#0f1e2c] border border-[#22384d] px-2 py-1 rounded">
+              PROTOTIPO v2.0 · API GATEWAY DEMO
+            </span>
+            <span className="text-[9px] text-[#4fb8c4] font-mono flex items-center gap-1">
+              <Info className="h-3 w-3" /> Interfaz de Referencia de la API (RBAC)
+            </span>
+          </div>
         </div>
 
         {/* Main Content */}
@@ -109,7 +116,7 @@ function MainLayout() {
               <h3 className="text-sm font-semibold text-[#f0f5f9]">2. Autentique Credencial de Actor</h3>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {ROLES.map((r) => (
+              {HUMAN_ROLES.map((r) => (
                 <button
                   key={r.id}
                   onClick={() => {
@@ -141,9 +148,17 @@ function MainLayout() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="text-center text-[10px] text-[#54697c] pt-8 border-t border-[#22384d] max-w-[1100px] mx-auto w-full">
-          INTEGRA Blockchain + IoT. Prototipo Académico de Seguridad y Auditoría de Trasplantes.
+        {/* Footer con Aclaración Arquitectónica de API */}
+        <div className="space-y-2 pt-8 border-t border-[#22384d] max-w-[1100px] mx-auto w-full text-center">
+          <div className="inline-flex items-center gap-2 bg-[#0f1e2c] border border-[#4fb8c4]/30 px-4 py-2 rounded-lg text-xs text-[#7d94a8] max-w-3xl mx-auto">
+            <Info className="h-4 w-4 text-[#4fb8c4] shrink-0" />
+            <p className="text-left leading-relaxed">
+              <strong className="text-[#f0f5f9]">Aviso de Arquitectura API:</strong> Este Portal es una interfaz gráfica de referencia para demostrar el consumo de la API de INTEGRA (Hyperledger Fabric Gateway). Los sistemas legados (e.g. SINTRA/HIS) consumirán los endpoints sin alterar sus interfaces actuales.
+            </p>
+          </div>
+          <p className="text-[10px] text-[#54697c]">
+            INTEGRA Blockchain + IoT. Prototipo Académico de Seguridad y Auditoría de Trasplantes.
+          </p>
         </div>
       </div>
     )
@@ -179,102 +194,109 @@ function MainLayout() {
   }
 
   // Dashboard / Inner view screen
+  const currentRole = HUMAN_ROLES.find((r) => r.id === roleActor) ?? HUMAN_ROLES[0]
+  
+  // Calculate ischemia for header stats
+  const remainingHoursRaw = Math.max(0, caseData.ischemiaWindowHours - simTimeHours)
+  const remH = Math.floor(remainingHoursRaw)
+  const remM = Math.round((remainingHoursRaw - remH) * 60)
+  const formatRemaining = `${String(remH).padStart(2, "0")}h ${String(remM).padStart(2, "0")}m`
+  
+  const organStatus = caseData.tempInternal > 4.2 || simTimeHours >= 20 ? "Crítico" : "Óptimo"
+  const organStatusColor = organStatus === "Óptimo" ? "text-[#79cf9c]" : "text-[#e5626a]"
+
   return (
     <div className="dark min-h-screen bg-[#0a141f] text-[#dbe6ef] font-sans">
-      <div className="max-w-[1280px] mx-auto p-4 sm:p-5 pb-12 space-y-4">
+      <div className="w-full max-w-[1600px] mx-auto p-4 sm:p-6 space-y-4">
 
-        {/* ── Dashboard Header ────────────────────────────────────────────── */}
-        <header className="flex flex-col gap-3 pb-3 border-b border-[#22384d] sm:flex-row sm:items-center sm:justify-between">
+        {/* ── Top Header Navigation Bar ────────────────────────────────────── */}
+        <header className="flex flex-col gap-3 pb-3 border-b border-[#22384d] lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <span
               className="text-[9px] font-bold font-mono px-2 py-0.5 rounded border uppercase"
               style={{
-                color: ROLES.find((r) => r.id === roleActor)?.color,
-                borderColor: `${ROLES.find((r) => r.id === roleActor)?.color}40`,
-                backgroundColor: `${ROLES.find((r) => r.id === roleActor)?.color}08`,
+                color: currentRole?.color,
+                borderColor: `${currentRole?.color}40`,
+                backgroundColor: `${currentRole?.color}08`,
               }}
             >
-              {ROLES.find((r) => r.id === roleActor)?.org}
+              {currentRole?.org}
             </span>
             <div>
-              <h2 className="text-sm font-bold text-[#f0f5f9] leading-tight">
-                {ROLES.find((r) => r.id === roleActor)?.label}
-              </h2>
-              <p className="text-[9px] text-[#54697c] uppercase tracking-wider font-semibold">
-                Escenario activo: <span className="text-[#4fb8c4]">{scenario === "normal" ? "Flujo Normal" : scenario === "insider" ? "Insider Amenaza" : "Ransomware Activo"}</span>
+              <h1 className="text-base font-bold text-[#f0f5f9] tracking-tight">
+                INTEGRA — Panel Operativo del Traslado Renal
+              </h1>
+              <p className="text-[10px] text-[#54697c] font-semibold">
+                Perfil: <span className="text-[#f0f5f9]">{currentRole?.label}</span> · Escenario: <span className="text-[#4fb8c4]">{scenario === "normal" ? "Flujo Normal" : scenario === "insider" ? "Insider Amenaza" : "Ransomware Activo"}</span>
               </p>
             </div>
           </div>
 
-          {/* SUTILE QUICK ROLE SWITCHER FOR DEMO OPERATORS */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              onClick={() => {
-                setScreen("portal")
-                toast.info("Sesión cerrada. Seleccione el nuevo actor para continuar la simulación.")
-              }}
-              className="px-3 py-1.5 text-[10px] font-bold rounded bg-[#cfa25e]/15 border border-[#cfa25e]/30 text-[#cfa25e] hover:bg-[#cfa25e]/25 transition-all flex items-center gap-1"
-            >
-              <RefreshCw className="h-3 w-3 animate-spin-slow" />
-              Cambiar Rol (Modo Simulación)
-            </button>
-          </div>
+          {/* Integrated SimClockBar and Action Buttons */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Integrated floating demo clock bar */}
+            <div className="w-full sm:w-auto">
+              <SimClockBar />
+            </div>
 
-          <button
-            onClick={() => {
-              setScreen("portal")
-              // Reset simulation on formal logout
-              toast.info("Simulación finalizada. Cerrando sesión...")
-            }}
-            className="flex items-center gap-1.5 px-3 py-1 text-xs rounded bg-[#132538] border border-[#22384d] text-[#7d94a8] hover:text-[#dbe6ef] hover:border-[#54697c] transition-all self-end sm:self-auto"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Salir
-          </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setScreen("portal")
+                  toast.info("Sesión cerrada. Seleccione el nuevo actor para continuar la simulación.")
+                }}
+                className="px-3 py-1.5 text-[10px] font-bold rounded bg-[#cfa25e]/15 border border-[#cfa25e]/30 text-[#cfa25e] hover:bg-[#cfa25e]/25 transition-all flex items-center gap-1.5"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Cambiar Rol
+              </button>
+              <button
+                onClick={() => {
+                  setScreen("portal")
+                  toast.info("Simulación finalizada. Cerrando sesión...")
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded bg-[#132538] border border-[#22384d] text-[#7d94a8] hover:text-[#dbe6ef] hover:border-[#54697c] transition-all"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Salir
+              </button>
+            </div>
+          </div>
         </header>
 
-        {/* ── Main Layout Grid (Optimized for no vertical scroll) ─────────── */}
-        <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
-
-          {/* Left Column: Clock and Stepper */}
-          <aside className="space-y-3">
-            <SimClockBar />
-
-            {/* Stepper showing main status in vertical layout */}
-            <div className="rounded-lg border border-[#22384d] bg-[#0f1e2c] p-3 space-y-3">
-              <h4 className="text-[9px] uppercase tracking-widest text-[#54697c] font-bold">
-                Trazabilidad General
-              </h4>
-              <div className="relative border-l border-[#22384d] ml-1.5 pl-3 space-y-2 text-xs font-semibold">
-                {[
-                  { label: "Caso Creado",      active: simTimeHours >= 0 },
-                  { label: "Acuerdo Firmado",  active: simTimeHours >= 1.25 },
-                  { label: "En Traslado",      active: simTimeHours >= 2 },
-                  { label: "Llegada Órgano",   active: simTimeHours >= 28 },
-                  { label: "Caso Cerrado",     active: simTimeHours >= 30 }
-                ].map((st, i) => (
-                  <div key={i} className="relative">
-                    <span className={`absolute left-[-16px] top-1 h-1.5 w-1.5 rounded-full ring-4 ${
-                      st.active ? "bg-[#4fb8c4] ring-[#4fb8c4]/15" : "bg-[#132538] ring-transparent"
-                    }`} />
-                    <span className={st.active ? "text-[#f0f5f9]" : "text-[#54697c]"}>
-                      {st.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
+        {/* ── Compact Horizontal Case Summary Header Bar ────────────────────── */}
+        <div className="grid gap-3 sm:grid-cols-4 bg-[#0f1e2c] border border-[#22384d] rounded-xl p-3 text-xs font-mono">
+          <div className="flex items-center gap-2.5">
+            <Heart className="h-4 w-4 text-[#4fb8c4] shrink-0" />
+            <div>
+              <span className="text-[9px] uppercase tracking-wider text-[#54697c] font-bold block font-sans">Caso Activo</span>
+              <span className="font-bold text-[#f0f5f9]">{caseData.caseId} ({caseData.organ})</span>
             </div>
-          </aside>
-
-          {/* Right Column: View injected based on active role */}
-          <main className="min-w-0">
-            {roleActor === "incucai" && <CoordinadorView />}
-            {roleActor === "hospital" && <HospitalView />}
-            {roleActor === "auditor" && <AuditorView />}
-            {roleActor === "iot" && <IotView />}
-            {roleActor === "itprov" && <TransportadorView />}
-          </main>
+          </div>
+          <div>
+            <span className="text-[9px] uppercase tracking-wider text-[#54697c] font-bold block font-sans">Donante</span>
+            <span className="text-[#dbe6ef] truncate block">{caseData.origin}</span>
+          </div>
+          <div>
+            <span className="text-[9px] uppercase tracking-wider text-[#54697c] font-bold block font-sans">Receptor</span>
+            <span className="text-[#dbe6ef] truncate block">{caseData.destination}</span>
+          </div>
+          <div className="flex items-center justify-between sm:justify-end gap-2">
+            <span className="text-[9px] uppercase tracking-wider text-[#54697c] font-bold font-sans">Cadena de Frío:</span>
+            <span className="text-[#79cf9c] font-bold px-2 py-0.5 rounded bg-[#79cf9c]/10 border border-[#79cf9c]/20">
+              {caseData.coldChain} ({caseData.tempInternal.toFixed(1)}°C)
+            </span>
+          </div>
         </div>
+
+        {/* ── Full Width Content Area (Zero sidebar, 100% width) ───────────── */}
+        <main className="w-full min-w-0">
+          {roleActor === "incucai" && <CoordinadorView />}
+          {roleActor === "hospital" && <HospitalView />}
+          {roleActor === "auditor" && <AuditorView />}
+          {roleActor === "iot" && <IotView />}
+          {roleActor === "itprov" && <TransportadorView />}
+        </main>
 
       </div>
     </div>
