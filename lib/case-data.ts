@@ -164,6 +164,11 @@ export type EventName =
   | "ASSIGNMENT_ENDORSED"
   | "RANSOMWARE_NODE_ISOLATED"
   | "RANSOMWARE_NODE_RESTORED"
+  /**
+   * ALERT_RESOLVED: written to the ledger when a coordinator or authorized user
+   * selects a corrective action in the AlertResolutionModal. Immutable audit record.
+   */
+  | "ALERT_RESOLVED"
 
 export const EVENT_LABEL: Record<EventName, string> = {
   CASE_CREATED:               "Caso creado",
@@ -187,6 +192,7 @@ export const EVENT_LABEL: Record<EventName, string> = {
   ASSIGNMENT_ENDORSED:        "Contrato de asignación endosado",
   RANSOMWARE_NODE_ISOLATED:   "Nodo aislado — actividad de cifrado detectada",
   RANSOMWARE_NODE_RESTORED:   "Nodo restaurado desde backup offline",
+  ALERT_RESOLVED:             "Acción correctiva registrada por coordinador",
 }
 
 // ─── Timeline ─────────────────────────────────────────────────────────────────
@@ -310,7 +316,10 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     tHours: 4.0,
     event: "IOT_READING_RECEIVED",
     scenarios: ["normal", "insider", "ransomware"],
-    visibleTo: ["incucai", "iot", "auditor"],
+    // IoT readings are operational custody data — visible to the transporter (itprov)
+    // and the IoT device itself. Auditor sees it for the full ledger. INCUCAI does NOT
+    // see raw sensor readings per RBAC matrix (Table 8: no access to "Custodia IoT").
+    visibleTo: ["itprov", "iot", "auditor"],
     actor: "DEVICE-001",
     org: "Sensor IoT",
     status: "VALID",
@@ -323,7 +332,11 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     tHours: 4.1,
     event: "TEMP_WARNING",
     scenarios: ["normal", "insider", "ransomware"],
-    visibleTo: ["incucai", "hospital", "auditor"],
+    // TEMP_WARNING is an operational custody alert. The transporter (itprov) handles
+    // it physically. Hospital is notified as the receiving party. Auditor sees it.
+    // INCUCAI does NOT see raw temperature alerts per RBAC — no "Custodia IoT" access.
+    // If state escalates to critical, a separate CRITICAL_ESCALATION alert is raised.
+    visibleTo: ["itprov", "hospital", "auditor"],
     actor: "DEVICE-001",
     org: "Sensor IoT",
     status: "VALID",
@@ -398,7 +411,11 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     tHours: 20.0,
     event: "TEMP_CRITICAL",
     scenarios: ["normal", "insider", "ransomware"],
-    visibleTo: ["incucai", "hospital", "auditor", "iot"],
+    // TEMP_CRITICAL = raw operational alert for the transporter and hospital receptor.
+    // INCUCAI does NOT receive raw sensor alerts per RBAC (Table 8).
+    // A separate CRITICAL_ESCALATION event (not yet wired to timeline — add when needed)
+    // should be generated if national coordination is required.
+    visibleTo: ["itprov", "hospital", "auditor", "iot"],
     actor: "DEVICE-001",
     org: "Sensor IoT",
     status: "VALID",
@@ -408,6 +425,10 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     alertLevel: "danger",
     alertTitle: "Umbral de 20h alcanzado — isquemia en zona de alerta",
   },
+  // ── NOTE: Add a CRITICAL_ESCALATION timeline event here when national intervention
+  // is needed (e.g. tHours: 22.0, scenarios: ["normal"], visibleTo: ["incucai", "auditor"],
+  // event: "TEMP_CRITICAL", alertTitle: "Escalamiento nacional: isquemia crítica").
+  // Keep it separate from TEMP_CRITICAL so the RBAC routing remains clean.
   {
     id: "T28.00-CUSTODY_RECEIVED",
     tHours: 28.0,
@@ -479,6 +500,18 @@ export type AlertCode =
   | "WAITING_LIST_TAMPER_ATTEMPT"
   | "RANSOMWARE_NODE_ISOLATED"
   | "RANSOMWARE_NODE_RESTORED"
+  /**
+   * CRITICAL_ESCALATION: fired ONLY when custody state reaches critical level
+   * and national coordination is needed. Separate from TEMP_CRITICAL on purpose.
+   * visibleTo: ["incucai", "auditor"] — deliberate national-level intervention.
+   */
+  | "CRITICAL_ESCALATION"
+  /**
+   * Security / RBAC alerts — visible only to incucai and auditor.
+   * Resolved via JUSTIFY | BLOCK | FALSE_POSITIVE.
+   */
+  | "RBAC_ANOMALY"
+  | "UNAUTHORIZED_ACCESS"
 
 export interface AlertItem {
   id: string
@@ -490,6 +523,14 @@ export interface AlertItem {
   time: string
   acknowledged: boolean
   visibleTo?: RoleActor[]   // if undefined → visible to all
+  /**
+   * alertCategory drives which resolution options appear in the modal:
+   * - "security": JUSTIFY | BLOCK | FALSE_POSITIVE
+   * - "custody":  ACCELERATE | NOTIFY_DEST | IN_RANGE
+   * Derived from alert.code when building the alert in the store;
+   * defaults to "security" if absent.
+   */
+  alertCategory?: "security" | "custody"
 }
 
 export const INITIAL_ALERTS: AlertItem[] = []

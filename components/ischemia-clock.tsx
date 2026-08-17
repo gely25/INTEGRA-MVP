@@ -8,18 +8,18 @@ import { Clock, AlertTriangle } from "lucide-react"
 
 const levelStyles = {
   ok: {
-    ring:  "text-[#79cf9c]",
-    chip:  "bg-[#79cf9c]/15 text-[#79cf9c] border-[#79cf9c]/30",
+    ring:  "text-ok",
+    chip:  "bg-ok/15 text-ok border-ok/30",
     label: "Dentro de ventana óptima",
   },
   warn: {
-    ring:  "text-[#cfa25e]",
-    chip:  "bg-[#cfa25e]/15 text-[#cfa25e] border-[#cfa25e]/40",
+    ring:  "text-warn",
+    chip:  "bg-warn/15 text-warn border-warn/40",
     label: "Superó ventana óptima (24h)",
   },
   danger: {
-    ring:  "text-[#e5626a]",
-    chip:  "bg-[#e5626a]/15 text-[#e5626a] border-[#e5626a]/40",
+    ring:  "text-danger",
+    chip:  "bg-danger/15 text-danger border-danger/40",
     label: "Crítico — cercano al límite",
   },
 } as const
@@ -59,8 +59,9 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
               cy={(radius * 2 + stroke) / 2}
               r={radius}
               fill="none"
-              stroke="#132538"
+              stroke="currentColor"
               strokeWidth={stroke}
+              className="text-secondary"
             />
             <circle
               cx={(radius * 2 + stroke) / 2}
@@ -79,10 +80,10 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
           </div>
         </div>
         <div className="leading-tight">
-          <p className="font-mono text-sm font-semibold tabular-nums text-[#f0f5f9]">
+          <p className="font-mono text-sm font-semibold tabular-nums text-card-foreground">
             {fmtSimHours(isc.remainingHours)}
           </p>
-          <p className="text-xs text-[#7d94a8]">restante al límite</p>
+          <p className="text-xs text-muted-foreground">restante al límite</p>
         </div>
       </div>
     )
@@ -107,8 +108,9 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
             cy={(radius * 2 + stroke) / 2}
             r={radius}
             fill="none"
-            stroke="#132538"
+            stroke="currentColor"
             strokeWidth={stroke}
+            className="text-secondary"
           />
           {/* Progress arc */}
           <circle
@@ -135,12 +137,12 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
                 Math.sin((alertAngle * Math.PI) / 180)
             }
             r={4}
-            fill="#cfa25e"
-            className="transition-all"
+            fill="currentColor"
+            className="transition-all text-warn"
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xs text-[#7d94a8]">consumido</span>
+          <span className="text-xs text-muted-foreground">consumido</span>
           <span className={cn("font-mono text-lg font-bold tabular-nums", s.ring)}>
             {Math.round(isc.pctOfWindow)}%
           </span>
@@ -160,30 +162,30 @@ export function IschemiaClock({ compact = false }: { compact?: boolean }) {
         </div>
 
         <div>
-          <p className="text-xs uppercase tracking-wide text-[#7d94a8]">Tiempo restante al límite</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Tiempo restante al límite</p>
           <p className={cn("font-mono text-2xl font-bold tabular-nums", s.ring)}>
             {fmtSimHours(isc.remainingHours)}
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-xs text-[#7d94a8] sm:justify-start">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground sm:justify-start">
           <span>
             Transcurrido:{" "}
-            <span className="font-mono font-medium text-[#dbe6ef] tabular-nums">
+            <span className="font-mono font-medium text-foreground tabular-nums">
               {fmtSimHours(isc.elapsedHours)}
             </span>
           </span>
           <span>
             Ventana óptima:{" "}
-            <span className="font-mono font-medium text-[#dbe6ef] tabular-nums">
+            <span className="font-mono font-medium text-foreground tabular-nums">
               {fmtSimHours(isc.remainingToTargetHours)} rest.
             </span>
           </span>
           <span>
             {isc.pastAlert && (
-              <span className="text-[#cfa25e] font-semibold">⚠ Umbral 20h superado</span>
+              <span className="text-warn font-semibold">⚠ Umbral 20h superado</span>
             )}
-            {!isc.pastAlert && <>Alerta: <span className="font-mono font-medium text-[#dbe6ef]">a las 20h</span></>}
+            {!isc.pastAlert && <>Alerta: <span className="font-mono font-medium text-foreground">a las 20h</span></>}
           </span>
         </div>
       </div>

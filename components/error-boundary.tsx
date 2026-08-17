@@ -75,63 +75,26 @@ export class ErrorBoundary extends React.Component<Props, State> {
         <div
           role="alert"
           aria-live="assertive"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: "100svh",
-            padding: "2rem",
-            textAlign: "center",
-            fontFamily: "system-ui, sans-serif",
-          }}
+          className="flex flex-col items-center justify-center min-h-[100svh] p-8 text-center bg-background text-foreground"
         >
-          <div
-            style={{
-              maxWidth: "480px",
-              padding: "2rem",
-              borderRadius: "12px",
-              border: "1px solid #e2e8f0",
-              background: "#fff",
-            }}
-          >
-            <p style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>⚠️</p>
-            <h1 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "0.5rem" }}>
+          <div className="max-w-md w-full p-8 rounded-xl border border-border bg-card">
+            <p className="text-3xl mb-2">⚠️</p>
+            <h1 className="text-xl font-bold text-card-foreground mb-2">
               Algo salió mal
             </h1>
-            <p style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "1.5rem" }}>
+            <p className="text-sm text-muted-foreground mb-6">
               Ocurrió un error inesperado en la aplicación. Por favor recargá la página.
               Si el problema persiste, contactá al equipo técnico.
             </p>
             {/* Solo mostrar detalles del error en desarrollo */}
             {process.env.NODE_ENV === "development" && this.state.errorMessage && (
-              <pre
-                style={{
-                  background: "#f1f5f9",
-                  padding: "0.75rem",
-                  borderRadius: "6px",
-                  fontSize: "0.75rem",
-                  textAlign: "left",
-                  color: "#dc2626",
-                  marginBottom: "1.5rem",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
+              <pre className="bg-muted p-3 rounded-lg text-xs text-left text-danger mb-6 overflow-x-auto whitespace-pre-wrap break-all">
                 {this.state.errorMessage}
               </pre>
             )}
             <button
               onClick={this.handleReset}
-              style={{
-                background: "#0e7490",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                padding: "0.5rem 1.5rem",
-                fontSize: "0.875rem",
-                cursor: "pointer",
-              }}
+              className="bg-primary hover:bg-primary/80 text-primary-foreground font-bold py-2 px-6 rounded-lg text-sm cursor-pointer transition-all"
             >
               Reintentar
             </button>

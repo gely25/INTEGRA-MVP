@@ -96,6 +96,10 @@ interface StoreValue {
   acknowledgeAlert: (id: string) => void
   markAiReviewed: () => void
   syncOffline: () => void
+  addEvent: (
+    event: EventName,
+    opts: { actor: string; org: string; status?: EvidenceStatus; plainText?: string; visibleTo?: RoleActor[]; tHours?: number }
+  ) => void
 }
 
 const StoreContext = createContext<StoreValue | null>(null)
@@ -228,6 +232,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })
 
       if (te.isAlert) {
+        // Derive category from event code so the resolution modal
+        // can show contextually appropriate action options.
+        const CUSTODY_CODES: AlertCode[] = [
+          "TEMP_WARNING", "TEMP_CRITICAL", "GPS_LOST", "BATTERY_LOW",
+        ]
+        const alertCategory: "security" | "custody" =
+          CUSTODY_CODES.includes(te.event as AlertCode) ? "custody" : "security"
+
         pushAlertRef.current(
           {
             code: te.event as AlertCode,
@@ -236,6 +248,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             detail: te.techDetail,
             plainDetail: te.plainDetail || undefined,
             visibleTo: te.visibleTo,
+            alertCategory,
           },
           tHours,
         )
@@ -444,6 +457,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       acknowledgeAlert,
       markAiReviewed,
       syncOffline,
+      addEvent: addEventRaw,
     }),
     [
       roleActor, screen, pamGranted,
@@ -453,7 +467,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       caseData, events, alerts, telemetry, offline, waitingList,
       assignmentContract, contractReached,
       aiAnomalyReviewed, ransomwareActive, ransomwareRestored,
-      signAssignment, acknowledgeAlert, markAiReviewed, syncOffline,
+      signAssignment, acknowledgeAlert, markAiReviewed, syncOffline, addEventRaw,
     ],
   )
 
