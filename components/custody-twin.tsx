@@ -43,7 +43,7 @@ export function CustodyTwin({ plainMode = false, compact = false }: CustodyTwinP
     { icon: Satellite, label: "Señal GPS", value: caseData.gpsActive ? "Ubicación activa" : "Buscando señal", tone: caseData.gpsActive ? "ok" : "danger" },
     { icon: Wifi, label: "Conexión", value: "Estable (Online)", tone: "info" },
     { icon: BatteryMedium, label: "Carga de Batería", value: `${caseData.battery}%`, tone: battTone },
-    { icon: CalendarCheck, label: "Estado del Órgano", value: caseData.status, tone: "info" },
+    { icon: CalendarCheck, label: "Estado del Órgano", value: caseData.status, tone: caseData.status === "Fallido — isquemia excedida" ? "danger" : caseData.status === "Llegó — verificación pendiente" ? "warn" : (caseData.status === "Recibido" || caseData.status === "Cerrado") ? "ok" : "info" },
     { icon: Bell, label: "Avisos Recientes", value: String(activeAlerts.length), tone: activeAlerts.length ? "warn" : "ok" },
     { icon: Heart, label: "Compatibilidad", value: "Óptima (Match 6/6)", tone: "ok" },
   ] : [

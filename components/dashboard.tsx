@@ -8,6 +8,7 @@ import { HospitalView } from "@/components/views/hospital-view"
 import { AuditorView } from "@/components/views/auditor-view"
 import { IotView } from "@/components/views/iot-view"
 import { TransportadorView } from "@/components/views/transportador-view"
+import { ProveedorITView } from "@/components/views/proveedor-it-view"
 import { SimClockBar } from "@/components/blocks/sim-clock-bar"
 import { Shield, Key, Database, ChevronRight, LogOut, RefreshCw, Heart, Info } from "lucide-react"
 import { toast } from "sonner"
@@ -293,7 +294,8 @@ function MainLayout() {
           {roleActor === "hospital" && <HospitalView />}
           {roleActor === "auditor" && <AuditorView />}
           {roleActor === "iot" && <IotView />}
-          {roleActor === "itprov" && <TransportadorView />}
+          {roleActor === "transportador" && <TransportadorView />}
+          {roleActor === "itprov" && <ProveedorITView />}
         </main>
 
       </div>

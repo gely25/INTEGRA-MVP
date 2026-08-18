@@ -100,6 +100,7 @@ interface StoreValue {
     event: EventName,
     opts: { actor: string; org: string; status?: EvidenceStatus; plainText?: string; visibleTo?: RoleActor[]; tHours?: number }
   ) => void
+  confirmReception: () => void
 }
 
 const StoreContext = createContext<StoreValue | null>(null)
@@ -138,11 +139,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const roleRef       = useRef(roleActor)
   const firedRef      = useRef<Set<string>>(new Set())
   const eventsRef     = useRef(events)
+  const caseDataRef   = useRef(caseData)
 
   useEffect(() => { simSpeedRef.current   = simSpeed },   [simSpeed])
   useEffect(() => { scenarioRef.current   = scenario },   [scenario])
   useEffect(() => { roleRef.current       = roleActor },  [roleActor])
   useEffect(() => { eventsRef.current     = events },     [events])
+  useEffect(() => { caseDataRef.current   = caseData },   [caseData])
 
   // ─── addEvent (async SHA-256 chaining) ────────────────────────────────────
   const addEventRaw = useCallback(
@@ -268,7 +271,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setCaseData((p) => ({ ...p, status: "En traslado", custodyStatus: "Activa", currentLocation: "En ruta" }))
       }
       if (te.event === "CUSTODY_RECEIVED") {
-        setCaseData((p) => ({ ...p, status: "Recibido", custodyStatus: "Recepción confirmada", currentLocation: "Hospital Receptor — Córdoba", routeProgress: 100 }))
+        setCaseData((p) => ({ ...p, status: "Llegó — verificación pendiente", custodyStatus: "Activa", currentLocation: "Hospital Receptor — Córdoba", routeProgress: 100 }))
       }
       if (te.event === "CASE_CLOSED") {
         setCaseData((p) => ({ ...p, status: "Cerrado" }))
@@ -311,8 +314,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (te.tHours > next)                   continue
           if (!te.scenarios.includes(sc))         continue
 
+          // CASE_CLOSED should only fire if status is "Recibido"
+          if (te.event === "CASE_CLOSED" && caseDataRef.current.status !== "Recibido") {
+            continue
+          }
+
           firedRef.current.add(te.id)
           fireTimelineEventRef.current(te, te.tHours)
+        }
+
+        // Check if ischemia window is exceeded
+        const currentCaseData = caseDataRef.current
+        if (
+          next > currentCaseData.ischemiaWindowHours &&
+          currentCaseData.status === "Llegó — verificación pendiente"
+        ) {
+          setCaseData((p) => ({ ...p, status: "Fallido — isquemia excedida" }))
+          
+          addEventRef.current("TEMP_CRITICAL", {
+            actor: "Dispositivo IoT",
+            org: "CONTENEDOR DE TRANSPORTE",
+            status: "VALID",
+            plainText: "Isquemia excedida — órgano no viable",
+            visibleTo: ["incucai", "hospital", "auditor"],
+            tHours: next,
+          })
+          
+          pushAlertRef.current({
+            code: "TEMP_CRITICAL",
+            level: "danger",
+            title: "Isquemia Excedida",
+            detail: "La ventana de isquemia de 36 horas ha sido superada sin que el hospital confirme la recepción.",
+            plainDetail: "Isquemia excedida — órgano no viable",
+            visibleTo: ["incucai", "hospital", "auditor"],
+            alertCategory: "custody",
+          }, next)
         }
 
         // Update telemetry point every 2 simulated hours of transport
@@ -417,6 +453,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setOffline((prev) => prev.map((r) => ({ ...r, synced: true })))
   }, [])
 
+  const confirmReception = useCallback(() => {
+    setCaseData((p) => ({ ...p, status: "Recibido", custodyStatus: "Recepción confirmada" }))
+    addEventRaw("CUSTODY_RECEIVED", {
+      actor: "Hospital Receptor",
+      org: "Hospital Receptor — Córdoba",
+      status: "VALID",
+      plainText: "El hospital confirmó la recepción física del riñón tras verificar checklist.",
+      visibleTo: ["incucai", "hospital", "auditor"],
+      tHours: simTimeHours,
+    })
+  }, [addEventRaw, simTimeHours])
+
   // ─── Derived contract ─────────────────────────────────────────────────────
   const assignmentContract: AssignmentContract = useMemo(() => ({
     ...INITIAL_ASSIGNMENT_CONTRACT,
@@ -458,6 +506,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       markAiReviewed,
       syncOffline,
       addEvent: addEventRaw,
+      confirmReception,
     }),
     [
       roleActor, screen, pamGranted,
@@ -468,6 +517,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       assignmentContract, contractReached,
       aiAnomalyReviewed, ransomwareActive, ransomwareRestored,
       signAssignment, acknowledgeAlert, markAiReviewed, syncOffline, addEventRaw,
+      confirmReception,
     ],
   )
 

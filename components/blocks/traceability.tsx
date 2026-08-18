@@ -6,6 +6,15 @@ import type { EventName, RoleActor } from "@/lib/case-data"
 import { StatusPill } from "@/components/status-pill"
 import { Hash, AlertTriangle, Clock, Search, ChevronDown, X, Filter } from "lucide-react"
 import { useState, useMemo, useCallback } from "react"
+import {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+} from "@/components/ui/select"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -250,22 +259,67 @@ export function Traceability({ techMode = true, role }: Props) {
           </FilterSelect>
 
           {/* Event-type select (grouped) */}
-          <FilterSelect
-            id="event-filter"
+          <Select
             value={eventFilter}
-            onChange={(v) => { setEventFilter(v); resetPagination() }}
-            placeholder="Todos los eventos"
+            onValueChange={(val) => {
+              setEventFilter(val ?? "")
+              resetPagination()
+            }}
           >
-            {EVENT_GROUPS.map(({ group, events: evts }) => (
-              <optgroup key={group} label={group}>
-                {evts.map((ev) => (
-                  <option key={ev} value={ev}>
-                    {EVENT_LABEL[ev as keyof typeof EVENT_LABEL] ?? ev}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </FilterSelect>
+            <SelectTrigger className={eventFilter ? "border-primary/60" : ""}>
+              <SelectValue placeholder="Todos los eventos">
+                {eventFilter ? (
+                  <span className="flex items-center gap-2">
+                    {EVENT_GROUPS.find((g) => g.group === "Alertas operativas")?.events.includes(eventFilter as any) ? (
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#cfa25e] shrink-0" />
+                    ) : EVENT_GROUPS.find((g) => g.group === "Seguridad e incidentes")?.events.includes(eventFilter as any) ? (
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#e5626a] shrink-0" />
+                    ) : (
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/40 shrink-0" />
+                    )}
+                    <span>{EVENT_LABEL[eventFilter as keyof typeof EVENT_LABEL] ?? eventFilter}</span>
+                  </span>
+                ) : (
+                  "Todos los eventos"
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">
+                <span className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30 shrink-0" />
+                  <span>Todos los eventos</span>
+                </span>
+              </SelectItem>
+
+              {EVENT_GROUPS.map(({ group, events: evts }) => {
+                const isWarningGroup = group === "Alertas operativas"
+                const isSecurityGroup = group === "Seguridad e incidentes"
+
+                return (
+                  <SelectGroup key={group}>
+                    <SelectLabel>{group}</SelectLabel>
+                    {evts.map((ev) => {
+                      const dotColor = isWarningGroup
+                        ? "bg-[#cfa25e]"
+                        : isSecurityGroup
+                          ? "bg-[#e5626a]"
+                          : "bg-emerald-500/40"
+
+                      return (
+                        <SelectItem key={ev} value={ev}>
+                          <span className="flex items-center gap-2">
+                            <span className={`h-1.5 w-1.5 rounded-full ${dotColor} shrink-0`} />
+                            <span>{EVENT_LABEL[ev as keyof typeof EVENT_LABEL] ?? ev}</span>
+                          </span>
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectGroup>
+                )
+              })}
+            </SelectContent>
+          </Select>
 
           {/* Alerts-only toggle */}
           <button

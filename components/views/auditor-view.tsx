@@ -30,7 +30,7 @@ export function AuditorView() {
   const totalEvents   = events.length
   const brokenEvents  = events.filter((e) => e.status === "BROKEN")
   const finalStatus   = brokenEvents.length === 0 ? "VALID" : "COMPROMISED"
-  const isClosed      = caseData.status === "Cerrado" || caseData.status === "Recibido"
+  const isClosed      = caseData.status === "Cerrado" || caseData.status === "Recibido" || caseData.status === "Fallido — isquemia excedida"
   const isInTransit   = caseData.status === "En traslado"
 
   const insiderAlert    = alerts.find((a) => a.code === "WAITING_LIST_TAMPER_ATTEMPT")
@@ -65,7 +65,12 @@ export function AuditorView() {
               Auditoría — {caseData.caseId}
             </h2>
           </div>
-          <StatusPill tone={isClosed ? "ok" : isInTransit ? "warn" : "neutral"}>
+          <StatusPill tone={
+            caseData.status === "Fallido — isquemia excedida" ? "danger" :
+            caseData.status === "Llegó — verificación pendiente" ? "warn" :
+            isClosed ? "ok" :
+            isInTransit ? "info" : "neutral"
+          }>
             {caseData.status}
           </StatusPill>
         </div>
@@ -98,7 +103,7 @@ export function AuditorView() {
       </div>
 
       {/* ── Módulo de IA ────────────────────────────────────────────── */}
-      <AiAnomalyCard />
+      <AiAnomalyCard readOnly />
 
       {/* ── Alertas de seguridad ────────────────────────────────────── */}
       {insiderAlert && (
@@ -144,10 +149,15 @@ export function AuditorView() {
       {/* ── SECCIÓN CONTEXTUAL: EN TRÁNSITO vs CERRADO ────────────────── */}
       {isInTransit && (
         <div className="rounded-lg border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-            <ArrowRight className="h-4 w-4 text-warn" />
+          <div className="px-4 pt-3 pb-1">
+            <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider block">
+              Evento más reciente destacado
+            </span>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-border">
+            <ArrowRight className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-semibold text-card-foreground">Estado Criptográfico en Tránsito</h3>
-            <span className="ml-auto text-[9px] font-mono bg-warn/10 text-warn border border-warn/20 px-2 py-0.5 rounded-full">EN TRÁNSITO</span>
+            <span className="ml-auto text-[9px] font-mono bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full">EN TRÁNSITO</span>
           </div>
           <div className="p-4 space-y-3">
             <p className="text-[10px] text-muted-foreground/60 italic">
@@ -155,32 +165,52 @@ export function AuditorView() {
               El expediente forense completo estará disponible en estado COMPLETADO/CERRADO.
             </p>
             {transportEvt ? (
-              <div className="rounded-lg border border-border bg-secondary p-3 font-mono text-[11px] space-y-1.5">
-                <div className="flex items-center gap-2 text-primary font-bold text-xs mb-2"><CheckCircle2 className="h-3.5 w-3.5" /> Evento de salida — TRANSPORT_STARTED</div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">Actor</span><span className="text-foreground">{transportEvt.actor}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">Org. emisora</span><span className="text-foreground">{transportEvt.org}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">Timestamp</span><span className="text-foreground">{transportEvt.time}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">TxId</span><span className="text-primary truncate ml-4 max-w-[180px]">{transportEvt.txId}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">Hash</span><span className="text-primary truncate ml-4 max-w-[180px]">{transportEvt.hash}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">Estado</span><span className="text-ok font-bold">{transportEvt.status}</span></div>
+              <div className="rounded-lg border border-border bg-secondary p-3 font-mono text-[11px] space-y-2">
+                <div className="flex items-center gap-2 text-primary font-bold text-xs mb-2">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Evento de salida — TRANSPORT_STARTED
+                </div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+                  <span className="text-muted-foreground/60">Actor</span>
+                  <span className="text-foreground font-medium">{transportEvt.actor}</span>
+                </div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+                  <span className="text-muted-foreground/60">Org. emisora</span>
+                  <span className="text-foreground font-medium">{transportEvt.org}</span>
+                </div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+                  <span className="text-muted-foreground/60">Timestamp</span>
+                  <span className="text-foreground font-medium">{transportEvt.time}</span>
+                </div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+                  <span className="text-muted-foreground/60">TxId</span>
+                  <span className="text-primary truncate">{transportEvt.txId}</span>
+                </div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+                  <span className="text-muted-foreground/60">Hash</span>
+                  <span className="text-primary truncate">{transportEvt.hash}</span>
+                </div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
+                  <span className="text-muted-foreground/60">Estado</span>
+                  <span className="text-ok font-bold">{transportEvt.status}</span>
+                </div>
               </div>
             ) : (
               <p className="text-xs text-muted-foreground/60 text-center py-4">Evento de inicio de traslado aún no registrado.</p>
             )}
             {deviceLinkedEvt && (
-              <div className="rounded-lg border border-border bg-secondary p-3 font-mono text-[11px] space-y-1.5">
+              <div className="rounded-lg border border-border bg-secondary p-3 font-mono text-[11px] space-y-2">
                 <div className="text-[9px] uppercase tracking-widest text-muted-foreground/60 font-bold mb-2">Certificado del nodo emisor (IoT)</div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">DeviceId</span><span className="text-[--color-chart-5]">DEVICE-001</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">CA emisora</span><span className="text-foreground">IoT CA / INTEGRA</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">TTL</span><span className="text-foreground">72h</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground/60">TLS</span><span className="text-ok font-bold">MUTUAL OK</span></div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center"><span className="text-muted-foreground/60">DeviceId</span><span className="text-[--color-chart-5]">DEVICE-001</span></div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center"><span className="text-muted-foreground/60">CA emisora</span><span className="text-foreground">IoT CA / INTEGRA</span></div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center"><span className="text-muted-foreground/60">TTL</span><span className="text-foreground">72h</span></div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center"><span className="text-muted-foreground/60">TLS</span><span className="text-ok font-bold">MUTUAL OK</span></div>
               </div>
             )}
             {assignmentEndEvt && (
-              <div className="rounded-lg border border-border bg-secondary p-3 font-mono text-[11px] space-y-1.5">
+              <div className="rounded-lg border border-border bg-secondary p-3 font-mono text-[11px] space-y-2">
                 <div className="text-[9px] uppercase tracking-widest text-muted-foreground/60 font-bold mb-2">Firmas del contrato de asignación</div>
-                <div className="flex items-center justify-between"><span className="text-muted-foreground/60">INCUCAI</span><span className="text-ok font-bold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Firmado</span></div>
-                <div className="flex items-center justify-between"><span className="text-muted-foreground/60">Hospital Receptor</span><span className="text-ok font-bold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Firmado</span></div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center"><span className="text-muted-foreground/60">INCUCAI</span><span className="text-ok font-bold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Firmado</span></div>
+                <div className="grid grid-cols-[160px_1fr] gap-2 items-center"><span className="text-muted-foreground/60">Hospital Receptor</span><span className="text-ok font-bold flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Firmado</span></div>
               </div>
             )}
           </div>
@@ -189,58 +219,66 @@ export function AuditorView() {
 
       {isClosed && <ForensicPanel />}
 
-      {/* ── Red blockchain ────────────────────────────────────────────────── */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Server className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-card-foreground">Red Blockchain</h3>
-          <span className="ml-auto text-[10px] font-mono text-muted-foreground/60">Hyperledger Fabric · Raft</span>
+      {/* ── Grid de 2 columnas: Red Blockchain e Hitos de custodia ────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Red blockchain */}
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Server className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-card-foreground">Red Blockchain</h3>
+            <span className="ml-auto text-[10px] font-mono text-muted-foreground/60">Hyperledger Fabric · Raft</span>
+          </div>
+          <DataRow label="Canal"        value={<span className="font-mono text-foreground">custody-channel + audit-channel</span>} />
+          <DataRow label="Chaincode"   value={<span className="font-mono text-foreground">CustodyChain v2.1</span>} />
+          <DataRow label="Último bloque" value={<span className="font-mono text-foreground">#14983</span>} />
+          <DataRow label="Peers activos" value={<StatusPill tone="ok">4/5 online</StatusPill>} />
+          <DataRow label="Modo"        value={<StatusPill tone="warn">Demo / Simulado</StatusPill>} />
         </div>
-        <DataRow label="Canal"        value={<span className="font-mono text-foreground">custody-channel + audit-channel</span>} />
-        <DataRow label="Chaincode"   value={<span className="font-mono text-foreground">CustodyChain v2.1</span>} />
-        <DataRow label="Último bloque" value={<span className="font-mono text-foreground">#14983</span>} />
-        <DataRow label="Peers activos" value={<StatusPill tone="ok">4/5 online</StatusPill>} />
-        <DataRow label="Modo"        value={<StatusPill tone="warn">Demo / Simulado</StatusPill>} />
-      </div>
 
-      {/* ── Hitos del caso ────────────────────────────────────────────────── */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Hash className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-card-foreground">Hitos de custodia</h3>
+        {/* Hitos de custodia */}
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Hash className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-card-foreground">Hitos de custodia</h3>
+          </div>
+          {[
+            { label: "Caso creado",          event: "CASE_CREATED"           },
+            { label: "Match de compatibilidad", event: "COMPATIBILITY_MATCH" },
+            { label: "Doble firma completa",  event: "ASSIGNMENT_SIGNED_HOSPITAL" },
+            { label: "Traslado iniciado",     event: "TRANSPORT_STARTED"     },
+            { label: "Recepción confirmada",  event: "CUSTODY_RECEIVED"      },
+            { label: "Caso cerrado",          event: "CASE_CLOSED"           },
+          ].map(({ label, event }) => {
+            const found = events.find((e) => e.event === event)
+            return (
+              <div key={event} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <span className="text-xs text-muted-foreground">{label}</span>
+                {found
+                  ? <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-foreground">{found.time}</span>
+                      <StatusPill tone="ok">OK</StatusPill>
+                    </div>
+                  : <StatusPill tone="warn">Pendiente</StatusPill>
+                }
+              </div>
+            )
+          })}
         </div>
-        {[
-          { label: "Caso creado",          event: "CASE_CREATED"           },
-          { label: "Match de compatibilidad", event: "COMPATIBILITY_MATCH" },
-          { label: "Doble firma completa",  event: "ASSIGNMENT_SIGNED_HOSPITAL" },
-          { label: "Traslado iniciado",     event: "TRANSPORT_STARTED"     },
-          { label: "Recepción confirmada",  event: "CUSTODY_RECEIVED"      },
-          { label: "Caso cerrado",          event: "CASE_CLOSED"           },
-        ].map(({ label, event }) => {
-          const found = events.find((e) => e.event === event)
-          return (
-            <div key={event} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-              <span className="text-xs text-muted-foreground">{label}</span>
-              {found
-                ? <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-foreground">{found.time}</span>
-                    <StatusPill tone="ok">OK</StatusPill>
-                  </div>
-                : <StatusPill tone="warn">Pendiente</StatusPill>
-              }
-            </div>
-          )
-        })}
       </div>
 
       {/* ── Ledger completo ───────────────────────────────────────────────── */}
       <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <div className="flex items-center gap-2 p-4 border-b border-border">
-          <Hash className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold text-card-foreground">Ledger criptográfico completo</h3>
-          <span className="ml-auto text-[10px] font-mono bg-secondary text-primary px-2 py-0.5 rounded-full border border-border">
-            SHA-256 encadenado
-          </span>
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Hash className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-card-foreground">Ledger criptográfico completo</h3>
+            <span className="ml-auto text-[10px] font-mono bg-secondary text-primary px-2 py-0.5 rounded-full border border-border">
+              SHA-256 encadenado
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground/60 mt-0.5">
+            Historial completo del caso
+          </p>
         </div>
         <div className="p-4">
           <Traceability techMode role="auditor" />

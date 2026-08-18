@@ -40,6 +40,10 @@ export const NAV_BY_ROLE: Record<RoleActor, NavItem[]> = {
     { id: "overview", label: "Consola de Máquina", icon: Terminal },
     { id: "telemetry", label: "Telemetría Pura", icon: Activity },
   ],
+  transportador: [
+    { id: "overview", label: "Custodia del Contenedor", icon: LayoutDashboard },
+    { id: "alerts", label: "Alertas Operativas", icon: Bell },
+  ],
   itprov: [
     { id: "overview", label: "Acceso PAM", icon: Lock },
     { id: "nodes", label: "Nodos Blockchain", icon: Server },

@@ -8,7 +8,11 @@ import { useStore } from "@/lib/store"
 // dedicated chart token, not a semantic status. We keep it as chart-5 references.
 // Everything else maps to semantic tokens.
 
-export function AiAnomalyCard() {
+interface AiAnomalyCardProps {
+  readOnly?: boolean
+}
+
+export function AiAnomalyCard({ readOnly = false }: AiAnomalyCardProps = {}) {
   const { aiAnomalyReviewed, markAiReviewed, simTimeHours } = useStore()
 
   // Only visible after T=8h
@@ -17,6 +21,8 @@ export function AiAnomalyCard() {
   return (
     <div
       className={`rounded-lg border p-4 transition-all duration-500 ${
+        readOnly ? "opacity-[0.85]" : ""
+      } ${
         aiAnomalyReviewed
           ? "border-border bg-card opacity-60"
           : "border-chart-5/60 bg-chart-5/15"
@@ -63,14 +69,21 @@ export function AiAnomalyCard() {
                   Detección por desviación estadística · sin regla fija
                 </span>
               </div>
-              <Button
-                size="sm"
-                className="mt-3 h-7 px-3 text-xs bg-chart-5 hover:bg-chart-5/80 text-primary-foreground font-bold"
-                onClick={markAiReviewed}
-              >
-                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-                Marcar como revisado
-              </Button>
+              {!readOnly ? (
+                <Button
+                  size="sm"
+                  className="mt-3 h-7 px-3 text-xs bg-chart-5 hover:bg-chart-5/80 text-primary-foreground font-bold"
+                  onClick={markAiReviewed}
+                >
+                  <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                  Marcar como revisado
+                </Button>
+              ) : (
+                <p className="mt-3 text-xs text-warn/80 font-mono flex items-center gap-1">
+                  <ShieldAlert className="h-3.5 w-3.5 text-warn shrink-0" />
+                  Pendiente de revisión por el operador (solo lectura)
+                </p>
+              )}
             </>
           ) : (
             <p className="mt-1 text-xs text-muted-foreground/60">

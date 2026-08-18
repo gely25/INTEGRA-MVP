@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 export function HospitalView() {
   const {
     caseData, events, simTimeHours, scenario, alerts,
-    assignmentContract, contractReached, signAssignment,
+    assignmentContract, contractReached, signAssignment, confirmReception,
   } = useStore();
 
   const [checklist, setChecklist] = useState({
@@ -34,7 +34,9 @@ export function HospitalView() {
   const isPendingHosp = contractReached && !sigs.hospital;
   const isIssued = sigs.incucai && sigs.hospital;
 
-  const canReceive = Object.values(checklist).every(Boolean) && simTimeHours >= 28 && caseData.status !== "Recibido";
+  const isFailed = caseData.status === "Fallido — isquemia excedida";
+  const isPendingVerification = caseData.status === "Llegó — verificación pendiente";
+  const canReceive = Object.values(checklist).every(Boolean) && isPendingVerification;
   const hasReceived = caseData.status === "Recibido" || caseData.status === "Cerrado";
 
   // Mockup shows exactly 4 steps:
@@ -43,10 +45,10 @@ export function HospitalView() {
   // 3. En camino
   // 4. Recibido
   const steps = [
-    { label: "Asignado", done: simTimeHours >= 0.5 },
-    { label: "Firmado", done: isIssued },
-    { label: "En camino", done: simTimeHours >= 2 },
-    { label: "Recibido", done: hasReceived },
+    { label: "Asignado", done: simTimeHours >= 0.5, failed: false, active: false },
+    { label: "Firmado", done: isIssued, failed: false, active: false },
+    { label: "En camino", done: simTimeHours >= 2, failed: false, active: false },
+    { label: "Recibido", done: hasReceived, failed: isFailed, active: isPendingVerification },
   ];
 
   // Dynamic status text under the stepper
@@ -54,8 +56,14 @@ export function HospitalView() {
     if (caseData.status === "Cerrado") {
       return "Trasplante finalizado y registrado inmutablemente";
     }
-    if (hasReceived) {
-      return "Riñón recibido — verifique el checklist para confirmar custodia";
+    if (caseData.status === "Fallido — isquemia excedida") {
+      return "Caso fallido — ventana de isquemia excedida, órgano no viable";
+    }
+    if (caseData.status === "Recibido") {
+      return "Riñón recibido y custodia física confirmada";
+    }
+    if (caseData.status === "Llegó — verificación pendiente") {
+      return "El riñón llegó al hospital — verificación de recepción pendiente";
     }
     if (simTimeHours >= 2) {
       return "Riñón en camino — llega en ~2h · acuerdo firmado por ambas partes";
@@ -86,21 +94,28 @@ export function HospitalView() {
         <div className="flex items-center justify-between w-full gap-4 px-2 py-2">
           {steps.map((s, i) => {
             const done = s.done;
-            const active = !s.done && (i === 0 || steps[i - 1].done);
+            const failed = s.failed;
+            const active = s.active || (!s.done && !s.failed && (i === 0 || steps[i - 1].done));
+            
+            let bgClass = "border-border bg-secondary text-muted-foreground/60";
+            if (done) {
+              bgClass = "border-ok bg-ok text-ok-foreground shadow-md shadow-ok/10";
+            } else if (failed) {
+              bgClass = "border-danger bg-danger text-danger-foreground shadow-md shadow-danger/10";
+            } else if (active) {
+              bgClass = "border-primary bg-primary/10 text-primary shadow-md shadow-primary/10";
+            }
+
             return (
               <div key={i} className="flex-1 flex items-center last:flex-none">
                 <div className="flex items-center gap-2 sm:flex-col sm:gap-1.5 relative w-full sm:w-auto">
-                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-all duration-300 ${
-                    done   ? "border-ok bg-ok text-ok-foreground shadow-md shadow-ok/10" :
-                    active ? "border-primary bg-primary/10 text-primary shadow-md shadow-primary/10" :
-                             "border-border bg-secondary text-muted-foreground/60"
-                  }`}>
-                    {done ? "✓" : i + 1}
+                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold transition-all duration-300 ${bgClass}`}>
+                    {done ? "✓" : failed ? "✗" : i + 1}
                   </div>
                 </div>
                 {i < steps.length - 1 && (
                   <div className={`h-0.5 flex-1 mx-3 rounded transition-all duration-300 ${
-                    steps[i + 1].done ? "bg-ok" : steps[i].done ? "bg-primary/50" : "bg-border"
+                    steps[i + 1].done ? "bg-ok" : steps[i + 1].failed ? "bg-danger" : steps[i].done ? "bg-primary/50" : "bg-border"
                   }`} />
                 )}
               </div>
@@ -111,6 +126,36 @@ export function HospitalView() {
           {getStepperStatusText()}
         </p>
       </div>
+
+      {/* ── Banners de estado de recepción ── */}
+      {caseData.status === "Llegó — verificación pendiente" && (
+        <div style={{ backgroundColor: "#1a1c0f", borderLeft: "3px solid #cfa25e" }} className="rounded-r-lg p-3.5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span style={{ backgroundColor: "#cfa25e", color: "#1a1c0f" }} className="px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wider shrink-0">
+              ACCIÓN REQUERIDA
+            </span>
+            <span className="text-xs font-semibold text-card-foreground">
+              El riñón llegó al hospital — verificación pendiente
+            </span>
+          </div>
+          <span className="text-xs font-mono text-[#cfa25e] shrink-0 font-bold">
+            Tiempo restante: {Math.max(0, caseData.ischemiaWindowHours - simTimeHours).toFixed(1)}h
+          </span>
+        </div>
+      )}
+
+      {caseData.status === "Fallido — isquemia excedida" && (
+        <div style={{ backgroundColor: "#1e0f10", borderLeft: "3px solid #e5626a" }} className="rounded-r-lg p-3.5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span style={{ backgroundColor: "#e5626a", color: "#1e0f10" }} className="px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wider shrink-0">
+              CASO FALLIDO
+            </span>
+            <span className="text-xs font-semibold text-[#e5626a]">
+              Isquemia excedida — órgano no viable
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* ── 2. Gemelo Digital de Custodia (Flanked layout) ──────────────── */}
       <div className="rounded-lg border border-border bg-card p-4">
@@ -159,14 +204,31 @@ export function HospitalView() {
                 { key: "history", label: "Historial verificado" },
               ].map(item => (
                 <div key={item.key} className="flex items-center gap-2">
-                  <Checkbox id={`chk-${item.key}`} checked={checklist[item.key as keyof typeof checklist]} onCheckedChange={c => setChecklist(p => ({ ...p, [item.key]: !!c }))} disabled={hasReceived} />
+                  <Checkbox id={`chk-${item.key}`} checked={checklist[item.key as keyof typeof checklist]} onCheckedChange={c => setChecklist(p => ({ ...p, [item.key]: !!c }))} disabled={hasReceived || isFailed} />
                   <Label htmlFor={`chk-${item.key}`} className="text-xs text-card-foreground cursor-pointer font-medium leading-none">{item.label}</Label>
                 </div>
               ))}
             </div>
           </div>
-          <Button className={`w-full h-10 font-bold text-xs transition-all ${hasReceived ? "bg-ok/10 text-ok border border-ok/30 cursor-default" : canReceive ? "bg-ok hover:bg-ok/80 text-ok-foreground" : "bg-secondary text-muted-foreground/60 cursor-not-allowed"}`} disabled={!canReceive && !hasReceived} onClick={() => { if (canReceive && !hasReceived) { toast.success("Custodia física recibida y confirmada en el Hospital Receptor"); } }}>
-            {hasReceived ? "Recepción Confirmada" : "Confirmar recepción del riñón"}
+          <Button 
+            className={`w-full h-10 font-bold text-xs transition-all ${
+              hasReceived 
+                ? "bg-ok/10 text-ok border border-ok/30 cursor-default" 
+                : isFailed
+                  ? "bg-secondary text-muted-foreground/40 border border-border cursor-not-allowed"
+                  : canReceive 
+                    ? "bg-ok hover:bg-ok/80 text-ok-foreground" 
+                    : "bg-secondary text-muted-foreground/60 cursor-not-allowed"
+            }`} 
+            disabled={isFailed || (!canReceive && !hasReceived)} 
+            onClick={() => { 
+              if (canReceive && !hasReceived && !isFailed) { 
+                confirmReception();
+                toast.success("Custodia física recibida y confirmada en el Hospital Receptor"); 
+              } 
+            }}
+          >
+            {hasReceived ? "Recepción Confirmada" : isFailed ? "Recepción Bloqueada — Caso Fallido" : "Confirmar recepción del riñón"}
           </Button>
         </div>
 

@@ -1,5 +1,4 @@
-// ─── Roles ───────────────────────────────────────────────────────────────────
-export type RoleActor = "incucai" | "hospital" | "auditor" | "iot" | "itprov"
+export type RoleActor = "incucai" | "hospital" | "auditor" | "iot" | "itprov" | "transportador"
 export type Scenario  = "normal"  | "insider"  | "ransomware"
 
 // Keep Role as alias for backward-compat imports
@@ -44,6 +43,15 @@ export const ROLES: RoleInfo[] = [
     note: "Lectura total del ledger, ventana de tiempo limitada. Sin escritura.",
   },
   {
+    id: "transportador",
+    label: "Transportador Operativo",
+    short: "Transportador",
+    org: "EMPRESA DE LOGÍSTICA / CUSTODIA",
+    color: "#e5a158",
+    method: "Token de sesión de traslado + Custodia IoT en tiempo real",
+    note: "Responsable directo de la custodia física del contenedor y la atención de alertas de frío e isquemia.",
+  },
+  {
     id: "iot",
     label: "Dispositivo IoT",
     short: "IoT",
@@ -59,7 +67,7 @@ export const ROLES: RoleInfo[] = [
     org: "MANTENIMIENTO TERCERIZADO",
     color: "#93a4b3",
     method: "Sin certificado propio — acceso cero por defecto",
-    note: "Todo acceso pasa por PAM con grabación de sesión. Nunca ve datos clínicos ni de pacientes.",
+    note: "Todo acceso pasa por PAM con grabación de sesión. Mantenimiento exclusivo de infraestructura.",
   },
 ]
 
@@ -74,7 +82,7 @@ export const HUMAN_ROLES: RoleInfo[] = ROLES.filter((r) => r.id !== "iot")
 export const IOT_ROLE: RoleInfo = ROLES.find((r) => r.id === "iot")!
 
 // ─── Case Snapshot ────────────────────────────────────────────────────────────
-export type CaseStatus    = "Preparado" | "En traslado" | "Recibido" | "Cerrado"
+export type CaseStatus    = "Preparado" | "En traslado" | "Llegó — verificación pendiente" | "Recibido" | "Cerrado" | "Fallido — isquemia excedida"
 export type CustodyStatus = "Pendiente" | "Activa" | "Recepción confirmada"
 export type EvidenceStatus = "VALID" | "BROKEN" | "pending"
 export type Source = "SIMULATED_SENSOR" | "REAL_SENSOR"
@@ -281,7 +289,7 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     org: "Hospital Receptor — Córdoba",
     status: "VALID",
     techDetail: "Firma mTLS Hospital Receptor registrada. Contrato AR-CONTRACT-001 en estado ISSUED.",
-    plainDetail: "El hospital confirmó la recepción del caso. Las dos firmas están completas.",
+    plainDetail: "El hospital aceptó el caso y firmó el acuerdo de asignación. Las dos firmas están completas.",
     isAlert: false,
     needsHospitalClick: true,  // if logged as hospital, requires manual click
   },
@@ -439,7 +447,7 @@ export const TIMELINE_EVENTS: TimelineEvent[] = [
     org: "Hospital Receptor — Córdoba",
     status: "VALID",
     techDetail: "Custodia física transferida. Cadena de frío verificada. Hash de recepción firmado por Hospital Receptor.",
-    plainDetail: "El riñón llegó al hospital. Cadena de frío verificada. Recepción confirmada.",
+    plainDetail: "El riñón llegó al hospital. Cadena de frío verificada. Verificación de recepción pendiente.",
     isAlert: false,
   },
   {

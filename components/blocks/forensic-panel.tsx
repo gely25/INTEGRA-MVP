@@ -39,7 +39,7 @@ const SIGNERS: X509Entry[] = [
 export function ForensicPanel() {
   const { events, caseData } = useStore()
 
-  const isClosed = caseData.status === "Cerrado" || caseData.status === "Recibido"
+  const isClosed = caseData.status === "Cerrado" || caseData.status === "Recibido" || caseData.status === "Fallido — isquemia excedida"
 
   // Derive integrity hash from the last event hash
   const lastEvent  = events[events.length - 1]
@@ -53,7 +53,7 @@ export function ForensicPanel() {
         <FileText className="h-8 w-8 text-muted-foreground/60 mx-auto mb-3" />
         <p className="text-sm font-semibold text-muted-foreground">Expediente no disponible</p>
         <p className="text-xs text-muted-foreground/60 mt-1">
-          El expediente forense post-mortem se genera únicamente cuando el caso está en estado{" "}
+          El expediente forense de Caso Cerrado se genera únicamente cuando el caso está en estado{" "}
           <span className="font-mono text-foreground">COMPLETADO</span> o{" "}
           <span className="font-mono text-foreground">CERRADO</span>.
           Para casos en tránsito, consulte la sección de eventos criptográficos.
@@ -69,7 +69,7 @@ export function ForensicPanel() {
       <div className="flex items-center gap-2 pb-2 border-b border-border">
         <ShieldCheck className="h-4 w-4 text-ok" />
         <h3 className="text-sm font-semibold text-card-foreground">
-          Expediente Forense Post-Mortem — {caseData.caseId}
+          Expediente Forense — Caso Cerrado — {caseData.caseId}
         </h3>
         <span className="ml-auto text-[9px] font-mono bg-ok/10 text-ok border border-ok/20 px-2 py-0.5 rounded-full">
           COMPLETADO · {closedTime}
