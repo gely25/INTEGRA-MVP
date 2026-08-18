@@ -101,6 +101,7 @@ interface StoreValue {
     opts: { actor: string; org: string; status?: EvidenceStatus; plainText?: string; visibleTo?: RoleActor[]; tHours?: number }
   ) => void
   confirmReception: () => void
+  jumpToSimTime: (tHours: number) => void
 }
 
 const StoreContext = createContext<StoreValue | null>(null)
@@ -465,6 +466,52 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })
   }, [addEventRaw, simTimeHours])
 
+  const jumpToSimTime = useCallback((targetHours: number) => {
+    setSimRunning(false)
+    const target = Math.max(0, Math.min(SIM_DURATION_HOURS, targetHours))
+
+    setSimTimeHours(target)
+
+    const sc = scenarioRef.current
+
+    // Fire all un-fired timeline events in order with tHours <= target
+    for (const te of TIMELINE_EVENTS) {
+      if (firedRef.current.has(te.id)) continue
+      if (te.tHours > target) continue
+      if (!te.scenarios.includes(sc)) continue
+
+      if (te.event === "CASE_CLOSED" && caseDataRef.current.status !== "Recibido") {
+        continue
+      }
+
+      firedRef.current.add(te.id)
+      fireTimelineEventRef.current(te, te.tHours)
+    }
+
+    // Update telemetry points & route progress up to target
+    if (target >= 2) {
+      for (let tBucket = 2; tBucket <= Math.floor(target / 2) * 2; tBucket += 2) {
+        const label = `T+${tBucket}h`
+        setTelemetry((pts) => {
+          if (pts.some((p) => p.t === label)) return pts
+          const last = pts[pts.length - 1] ?? { internal: 3.2, external: 18.7 }
+          const drift = (tBucket / 34) * 0.8
+          return [
+            ...pts.slice(-15),
+            {
+              t: label,
+              tHours: tBucket,
+              internal: +(last.internal + (Math.random() - 0.4) * 0.3 + drift * 0.05).toFixed(1),
+              external: +(last.external + (Math.random() - 0.5) * 0.4).toFixed(1),
+            },
+          ]
+        })
+      }
+      const progress = Math.min(100, Math.round(((target - 2) / (28 - 2)) * 100))
+      setCaseData((p) => ({ ...p, routeProgress: Math.max(p.routeProgress, progress) }))
+    }
+  }, [])
+
   // ─── Derived contract ─────────────────────────────────────────────────────
   const assignmentContract: AssignmentContract = useMemo(() => ({
     ...INITIAL_ASSIGNMENT_CONTRACT,
@@ -507,17 +554,42 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       syncOffline,
       addEvent: addEventRaw,
       confirmReception,
+      jumpToSimTime,
     }),
     [
-      roleActor, screen, pamGranted,
-      scenario, setScenario,
-      simTimeHours, simRunning, simSpeed,
-      startSim, pauseSim, resetSim, setSimSpeed,
-      caseData, events, alerts, telemetry, offline, waitingList,
-      assignmentContract, contractReached,
-      aiAnomalyReviewed, ransomwareActive, ransomwareRestored,
-      signAssignment, acknowledgeAlert, markAiReviewed, syncOffline, addEventRaw,
+      roleActor,
+      setRoleActor,
+      screen,
+      setScreen,
+      pamGranted,
+      setPamGranted,
+      scenario,
+      setScenario,
+      simTimeHours,
+      simRunning,
+      simSpeed,
+      startSim,
+      pauseSim,
+      resetSim,
+      setSimSpeed,
+      caseData,
+      events,
+      alerts,
+      telemetry,
+      offline,
+      waitingList,
+      assignmentContract,
+      contractReached,
+      aiAnomalyReviewed,
+      ransomwareActive,
+      ransomwareRestored,
+      signAssignment,
+      acknowledgeAlert,
+      markAiReviewed,
+      syncOffline,
+      addEventRaw,
       confirmReception,
+      jumpToSimTime,
     ],
   )
 

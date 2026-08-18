@@ -10,6 +10,7 @@ import { IotView } from "@/components/views/iot-view"
 import { TransportadorView } from "@/components/views/transportador-view"
 import { ProveedorITView } from "@/components/views/proveedor-it-view"
 import { SimClockBar } from "@/components/blocks/sim-clock-bar"
+import { DirectorPanel } from "@/components/blocks/director-panel"
 import { Shield, Key, Database, ChevronRight, LogOut, RefreshCw, Heart, Info } from "lucide-react"
 import { toast } from "sonner"
 
@@ -240,12 +241,13 @@ function MainLayout() {
               <SimClockBar />
             </div>
             <div className="flex items-center gap-2 pt-1">
+              <DirectorPanel />
               <button
                 onClick={() => {
                   setScreen("portal")
                   toast.info("Sesión cerrada. Seleccione el nuevo actor para continuar la simulación.")
                 }}
-                className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-transparent border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all flex items-center gap-1.5"
+                className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-transparent border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <RefreshCw className="h-3 w-3" />
                 Cambiar rol

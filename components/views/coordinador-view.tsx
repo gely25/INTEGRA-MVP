@@ -9,6 +9,7 @@ import { StatusPill } from "@/components/status-pill"
 import { AlertResolutionModal } from "@/components/blocks/alert-resolution-modal"
 import { ManualSignModal } from "@/components/blocks/manual-sign-modal"
 import { SimClockBar } from "@/components/blocks/sim-clock-bar"
+import { DirectorPanel } from "@/components/blocks/director-panel"
 import type { AlertItem } from "@/lib/case-data"
 import {
   FileSignature, AlertTriangle,
@@ -167,9 +168,10 @@ export function CoordinadorView() {
               <SimClockBar />
             </div>
             <div className="flex items-center gap-2 pt-1">
+              <DirectorPanel />
               <button
                 onClick={() => setScreen("portal")}
-                className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-transparent border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all flex items-center gap-1.5"
+                className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-transparent border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <RefreshCw className="h-3 w-3" /> Cambiar rol
               </button>
